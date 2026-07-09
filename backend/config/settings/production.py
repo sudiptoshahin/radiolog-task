@@ -29,8 +29,8 @@ SECURE_HSTS_PRELOAD = True
 # JWT - Settings
 #----------------------------------------------------
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=config("JWT_ACCESS_TOKEN_LIFETIME_MINUITE", default=5)),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=config("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7)),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=config("JWT_ACCESS_TOKEN_LIFETIME_MINUITE", default=5, cast=int)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=config("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7, cast=int)),
     "ROTATE_REFRESH_TOKENS": config("JWT_ROTATE_REFRESH_TOKENS"),
     "BLACKLIST_AFTER_ROTATION": config("JWT_BLACKLIST_AFTER_ROTATION"),
     "UPDATE_LAST_LOGIN": config("JWT_UPDATE_LAST_LOGIN"),
