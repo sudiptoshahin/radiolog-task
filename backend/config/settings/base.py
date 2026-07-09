@@ -93,6 +93,13 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"}
 ]
 
+
+AUTHENTICATION_BACKENDS = [
+    "apps.user.backends.EmailBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+
 LOGIN_URL = "user:login"
 LOGIN_REDIRECT_URL = "user:user-list"
 LOGOUT_REDIRECT_URL = "user:login"

@@ -13,7 +13,8 @@ class User(AbstractUser, TimeStampedModel):
 
     # If a user goes to your login page, they will enter their email and password 
     # instead of a username and password.
-    USERNAME_FIELD = "username"
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ("username", )
 
     class Meta:
         constraints = [
@@ -63,7 +64,7 @@ class User(AbstractUser, TimeStampedModel):
         super().clean()
         errors = {}
 
-        for validator in (self.clean_username, self.clean_email, self.clean_role):
+        for validator in (self.clean_username, self.clean_email):
             try:
                 validator()
             except ValidationError as e:
