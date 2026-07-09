@@ -13,23 +13,16 @@ SECURE_HSTS_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DATABASE_NAME", default="ddrf_auth_db"),
-        "USER": config("DATABASE_USER", default="myproject"),
-        "PASSWORD": config("DATABASE_PASSWORD", default=""),
-        "HOST": config("DATABASE_HOST", default="localhost"),
-        "PORT": config("DATABASE_PORT", default="5432"),
-    }
-}
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = config("EMAIL_HOST", default="")
-EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": config("DATABASE_NAME", default="ddrf_auth_db"),
+#         "USER": config("DATABASE_USER", default="myproject"),
+#         "PASSWORD": config("DATABASE_PASSWORD", default=""),
+#         "HOST": config("DATABASE_HOST", default="localhost"),
+#         "PORT": config("DATABASE_PORT", default="5432"),
+#     }
+# }
 
 
 #----------------------------------------------------
