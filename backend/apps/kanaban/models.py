@@ -11,9 +11,10 @@ from django.utils.text import slugify
 class Task(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     title = models.CharField(max_length=200, blank=False, null=False)
-    priority = models.CharField(max_length=20, choices=Constants.TASK_PRIORITIES)
+    priority = models.CharField(max_length=100, choices=Constants.TASK_PRIORITIES)
     due_date = models.DateTimeField(blank=False, null=False)
     tags = models.ManyToManyField("Tag", related_name="tasks", blank=False)
+    status = models.CharField(max_length=100, choices=Constants.TASK_STATUS, default="TODO")
 
     REQUIRED_FIELDS = ("title", "priority", "due_date", "tags")
 

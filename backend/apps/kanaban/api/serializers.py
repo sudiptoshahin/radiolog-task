@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.kanaban.models import Tag, Task
-
+from utils.constants import Constants
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,83 +33,6 @@ class TagSerializer(serializers.ModelSerializer):
         return instance
 
 
-# class TaskSerializer(serializers.ModelSerializer):
-#     """
-#     Serializer for Task CRUD.
-#     - Read: `tags` is expanded into full nested TagSerializer objects.
-#     - Write: `tags` accepts a list of Tag IDs via `tag_ids`.
-#     This read/write split is the standard DRF pattern for M2M relations
-#     where you want rich output but simple input.
-#     """
-
-#     tags = TagSerializer(many=True, read_only=True)
-#     tag_ids = serializers.PrimaryKeyRelatedField(
-#         source="tags",
-#         queryset=Tag.objects.all(),
-#         many=True,
-#         write_only=True,
-#         required=True,
-#         allow_empty=False,
-#     )
-
-#     class Meta:
-#         model = Task
-#         fields = (
-#             "id",
-#             "title",
-#             "priority",
-#             "due_date",
-#             "tags",
-#             "tag_ids",
-#             "created_at",
-#             "updated_at",
-#         )
-#         read_only_fields = ("id", "created_at", "updated_at")
-
-#     def validate_title(self, value):
-#         value = value.strip()
-#         if not value:
-#             raise serializers.ValidationError("Task title can not be empty!")
-
-#         qs = Task.objects.filter(title__iexact=value)
-#         if self.instance is not None:
-#             qs = qs.exclude(pk=self.instance.pk)
-#         if qs.exists():
-#             raise serializers.ValidationError("Title already exists!")
-
-#         return value
-
-#     def validate_priority(self, value):
-#         valid_values = dict(Task._meta.get_field("priority").choices or {})
-#         if value not in valid_values:
-#             raise serializers.ValidationError("Invalid priority selected.")
-#         return value
-
-#     def validate_tag_ids(self, value):
-#         if not value:
-#             raise serializers.ValidationError("Please add at least one tag.")
-#         return value
-
-#     def create(self, validated_data):
-#         # 'tags' here is a list of Tag instances resolved by
-#         # PrimaryKeyRelatedField (via source="tags" on tag_ids)
-#         tags = validated_data.pop("tags")
-#         task = Task.objects.create(**validated_data)
-#         task.tags.set(tags)
-#         return task
-
-#     def update(self, instance, validated_data):
-#         tags = validated_data.pop("tags", None)
-
-#         for attr, value in validated_data.items():
-#             setattr(instance, attr, value)
-#         instance.save()
-
-#         if tags is not None:
-#             instance.tags.set(tags)
-
-#         return instance
-
 class TaskSerializer(serializers.ModelSerializer):
     """
     Serializer for Task CRUD.
@@ -136,6 +59,7 @@ class TaskSerializer(serializers.ModelSerializer):
             "priority",
             "due_date",
             "tags",
+            "status",
             "created_at",
             "updated_at",
         )
@@ -158,6 +82,14 @@ class TaskSerializer(serializers.ModelSerializer):
         valid_values = dict(Task._meta.get_field("priority").choices or {})
         if value not in valid_values:
             raise serializers.ValidationError("Invalid priority selected.")
+        return value
+    
+    def validate_status(self, value):
+        value = value.strip()
+
+        if any(value != status[0] for status in Constants.TASK_STATUS):
+            raise serializers.ValidationError("Choose a correct status!")
+
         return value
 
     def to_internal_value(self, data):
