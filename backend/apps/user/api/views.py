@@ -21,8 +21,11 @@ class LoginView(APIView):
 
         return Response(
             {
-                "user": UserSerializer(user).data,
-                "tokens": tokens
+                "data": {
+                    "user": UserSerializer(user).data,
+                    "tokens": tokens
+                },
+                "code": status.HTTP_200_OK,
             },
             status=status.HTTP_200_OK
         )

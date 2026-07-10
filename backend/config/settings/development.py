@@ -5,8 +5,6 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 DEBUG = True
-ALLOWED_HOSTS = ["*"]
-
 # For dev-only apps
 INSTALLED_APPS += []
 

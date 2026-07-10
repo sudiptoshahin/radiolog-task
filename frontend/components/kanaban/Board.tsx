@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Kalam } from "next/font/google";
 import { Task, Status, TaskTag } from "../../models/tasks";
-import { generateMockTasks } from "../../utils/kanaban";
 import Column from "./Column";
 import Image from "next/image";
 import TaskModal from "./TaskModal";
+import useTaskStore from "@/store/useTaskStore";
 
 const kalam = Kalam({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -26,7 +26,7 @@ export const AVAILABLE_TAGS: TaskTag[] = [
 ];
 
 export default function Board() {
-    const [tasks, setTasks] = useState<Task[]>(() => generateMockTasks());
+    const { tasks, isLoading, error, fetchTasks, createTask, updateTask, deleteTask } = useTaskStore();
     const columnRefs = useRef<Record<Status, HTMLDivElement | null>>({
         TODO: null,
         IN_PROGRESS: null,
@@ -35,12 +35,21 @@ export default function Board() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
-    const handleDropToColumn = useCallback((taskId: string, status: Status) => {
-        setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status } : t)));
-    }, []);
+    // Load tasks from the API once on mount
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
+
+    const handleDropToColumn = useCallback(
+        (taskId: string, status: Status) => {
+            // fire the PATCH; store's updateTask already reconciles `tasks` with the server response
+            updateTask(taskId, { status });
+        },
+        [updateTask]
+    );
 
     function onHandleTaskCreate() {
-        openCreateModal()
+        openCreateModal();
     }
 
     function openCreateModal() {
@@ -53,43 +62,72 @@ export default function Board() {
         setModalOpen(true);
     }
 
-    function handleTaskSubmit(task: Task) {
-        setTasks((prev) => {
-            const exists = prev.some((t) => t.id === task.id);
-            return exists ? prev.map((t) => (t.id === task.id ? task : t)) : [...prev, task];
-        });
+    async function handleTaskSubmit(task: Task) {
+        const isEdit = tasks.some((t) => t.id === task.id);
+
+        if (isEdit) {
+            await updateTask(task.id, {
+                title: task.title,
+                priority: task.priority,
+                due_date: task.due_date,
+                status: task.status,
+                tags: task.tags.map((t) => t.id),
+            });
+        } else {
+            await createTask({
+                title: task.title,
+                priority: task.priority,
+                due_date: task.due_date,
+                status: task.status,
+                tags: task.tags.map((t) => t.id),
+            });
+        }
     }
 
     return (
-        <div className="w-full h-full rounded-2xl border-[6px] border-neutral-300 bg-white p-6 shadow-lg relative">
+        <div className="relative h-full w-full rounded-2xl border-[6px] border-neutral-300 bg-white p-6 shadow-lg">
             <h1 className={`${kalam.className} text-center text-3xl font-bold text-neutral-800`}>
                 Kanban
             </h1>
             <div className="mx-auto mt-2 h-[2px] w-full bg-neutral-800" />
 
-            <div className="relative mt-4 grid grid-cols-1 gap-0 sm:grid-cols-3">
-                <div className="pointer-events-none absolute inset-y-0 left-1/3 hidden w-[2px] bg-neutral-800 sm:block" />
-                <div className="pointer-events-none absolute inset-y-0 left-2/3 hidden w-[2px] bg-neutral-800 sm:block" />
+            {error && (
+                <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-600">
+                    {error}
+                </p>
+            )}
 
-                {COLUMNS.map((col) => (
-                    <Column
-                        key={col.id}
-                        id={col.id}
-                        title={col.title}
-                        tasks={tasks.filter((t) => t.status === col.id)}
-                        columns={COLUMNS}
-                        columnRefs={columnRefs}
-                        onDropToColumn={handleDropToColumn}
-                    />
-                ))}
-            </div>
+            {isLoading && tasks.length === 0 ? (
+                <p className={`${kalam.className} mt-10 text-center text-neutral-400`}>
+                    Loading tasks...
+                </p>
+            ) : (
+                <div className="relative mt-4 grid grid-cols-1 gap-0 sm:grid-cols-3">
+                    <div className="pointer-events-none absolute inset-y-0 left-1/3 hidden w-[2px] bg-neutral-800 sm:block" />
+                    <div className="pointer-events-none absolute inset-y-0 left-2/3 hidden w-[2px] bg-neutral-800 sm:block" />
 
-            <div className="absolute bottom-20 right-10 flex h-[50px] w-[50px] items-center justify-center rounded-full bg-black animate-[bounce_2.5s_ease-in-out_infinite] cursor-pointer"
-                onClick={onHandleTaskCreate}>
+                    {COLUMNS.map((col) => (
+                        <Column
+                            key={col.id}
+                            id={col.id}
+                            title={col.title}
+                            tasks={tasks.filter((t) => t.status === col.id)}
+                            columns={COLUMNS}
+                            columnRefs={columnRefs}
+                            onDropToColumn={handleDropToColumn}
+                        />
+                    ))}
+                </div>
+            )}
+
+            <div
+                className="absolute bottom-20 right-10 flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full bg-black animate-[bounce_2.5s_ease-in-out_infinite]"
+                onClick={onHandleTaskCreate}
+            >
                 <Image src={"/images/icons/create_task.svg"} height={24} width={24} alt="add-task" />
             </div>
 
-            <div className="">
+            <div>
                 <TaskModal
                     tags={AVAILABLE_TAGS}
                     isOpen={modalOpen}
@@ -98,7 +136,6 @@ export default function Board() {
                     initialData={editingTask}
                 />
             </div>
-
         </div>
     );
 }

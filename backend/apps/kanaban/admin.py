@@ -28,9 +28,9 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ("title", "priority", "due_date", "tag_list", "created_at")
+    list_display = ("title", "priority", "status", "due_date", "tag_list", "created_at")
     list_display_links = ("title",)
-    list_filter = ("priority", "due_date", "tags")
+    list_filter = ("priority", "status", "due_date", "tags")
     search_fields = ("title",)
     ordering = ("-created_at",)
     date_hierarchy = "due_date"
@@ -39,7 +39,7 @@ class TaskAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            "fields": ("title", "priority", "due_date", "tags"),
+            "fields": ("title", "priority", "status", "due_date", "tags"),
         }),
         (_("Metadata"), {
             "fields": ("id", "created_at", "updated_at"),
