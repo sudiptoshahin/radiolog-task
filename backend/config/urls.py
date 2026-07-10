@@ -11,7 +11,8 @@ urlpatterns = [
     path("users/", include("apps.user.urls", namespace="user_manage")),
     
     # API's
-    path("api/v1/users/", include("apps.user.api.urls", namespace="user_api"))
+    path("api/v1/users/", include("apps.user.api.urls", namespace="user_api")),
+    path("api/v1/kanabans/", include("apps.kanaban.api.urls", namespace="kanaban_api")),
 ]
 
 
