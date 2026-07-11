@@ -23,7 +23,6 @@ interface TaskStore {
     clearTasks: () => void;
 }
 
-// A successful single-task response always has an `id`; an error response never does.
 function isTask(res: unknown): res is Task {
     return !!res && typeof res === "object" && "id" in (res as object);
 }
@@ -39,14 +38,14 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
     isLoading: false,
     error: null,
 
-    fetchTags: async() => {
+    fetchTags: async () => {
         set({ isLoading: true, error: null });
         const res = await ApiService.ALL_TAGS();
 
         set({ tags: res?.results, isLoading: false });
     },
 
-    fetchTasks: async (dueDate: string="") => {
+    fetchTasks: async (dueDate: string = "") => {
         set({ isLoading: true, error: null });
         const res = await ApiService.ALL_TASKS(dueDate);
 
@@ -54,7 +53,7 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
             set({ tasks: res?.data, isLoading: false });
         } else {
             const err = res as ApiErrorResponse;
-            set({ error: err.message ?? err?.detail ?? "Failed to fetch tasks.", isLoading: false });
+            set({ error: err.message ?? "Failed to fetch tasks.", isLoading: false });
         }
     },
 
@@ -68,7 +67,7 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
         }
 
         const err = res as ApiErrorResponse;
-        set({ error: err.message ?? err.detail ?? "Failed to create task.", isLoading: false });
+        set({ error: err.message ?? "Failed to create task.", isLoading: false });
         return null;
     },
 
@@ -91,7 +90,7 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
         }
 
         const err = res as ApiErrorResponse;
-        set({ error: err.message ?? err.detail ?? "Failed to fetch task.", isLoading: false });
+        set({ error: err.message ?? "Failed to fetch task.", isLoading: false });
         return null;
     },
 
@@ -108,7 +107,7 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
         }
 
         const err = res as ApiErrorResponse;
-        set({ error: err.message ?? err.detail ?? "Failed to update task.", isLoading: false });
+        set({ error: err.message ?? "Failed to update task.", isLoading: false });
         return null;
     },
 
@@ -119,8 +118,8 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
         // DELETE endpoints often return 204 No Content -> res.data is "" or undefined,
         // which is not an ApiErrorResponse shape, so treat "no error object" as success.
         const err = res as ApiErrorResponse;
-        if (err && (err.message || err.detail)) {
-            set({ error: err.message ?? err.detail ?? "Failed to delete task.", isLoading: false });
+        if (err && err.message) {
+            set({ error: err.message, isLoading: false });
             return false;
         }
 
