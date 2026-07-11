@@ -26,7 +26,7 @@ export interface TaskCreatePayload {
   title: string;
   priority: Priority;
   due_date: string;
-  tags: TaskTag[];
+  tags: Array<string>;
   status: Status;
 }
 
@@ -34,6 +34,6 @@ export interface TaskUpdatePayload {
   title?: string;
   priority?: Priority;
   due_date?: string;
-  tags?: TaskTag[];
+  tags?: Array<string>;
   status?: Status;
 }

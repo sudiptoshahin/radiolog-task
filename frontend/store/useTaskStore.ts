@@ -1,14 +1,16 @@
 import { create } from "zustand";
 import ApiService from "@/services/ApiService";
 import { ApiErrorResponse } from "@/models/common";
-import { Task, TaskCreatePayload, TaskUpdatePayload } from "@/models/tasks";
+import { Task, TaskCreatePayload, TaskTag, TaskUpdatePayload } from "@/models/tasks";
 
 
 interface TaskStore {
-    tasks: Task[];
+    tasks: Array<Task>;
+    tags: Array<TaskTag>;
     isLoading: boolean;
     error: string | null;
 
+    fetchTags: () => Promise<void>;
     fetchTasks: () => Promise<void>;
     createTask: (payload: TaskCreatePayload) => Promise<Task | null>;
     getTaskById: (taskId: string) => Promise<Task | null>;
@@ -33,17 +35,23 @@ function isTaskArray(res: unknown): res is Task[] {
 
 const useTaskStore = create<TaskStore>()((set, get) => ({
     tasks: [],
+    tags: [],
     isLoading: false,
     error: null,
+
+    fetchTags: async() => {
+        set({ isLoading: true, error: null });
+        const res = await ApiService.ALL_TAGS();
+
+        set({ tags: res?.results, isLoading: false });
+    },
 
     fetchTasks: async () => {
         set({ isLoading: true, error: null });
         const res = await ApiService.ALL_TASKS();
 
-        console.log('__res__', res)
-
-        if (isTaskArray(res.results)) {
-            set({ tasks: res.results, isLoading: false });
+        if (isTaskArray(res?.results)) {
+            set({ tasks: res?.results, isLoading: false });
         } else {
             const err = res as ApiErrorResponse;
             set({ error: err.message ?? err?.detail ?? "Failed to fetch tasks.", isLoading: false });

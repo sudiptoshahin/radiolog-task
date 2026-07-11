@@ -138,10 +138,10 @@ export default class ApiService {
         }
     }
 
-    static async ALL_TAGS(taskId: string) {
+    static async ALL_TAGS() {
         try {
             const headers = this.getHeader();
-            const res = await axios.delete(process.env.NEXT_PUBLIC_API_BASE_URL + `/kanabans/tasks/${taskId}/delete/`, { headers });
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + `/kanabans/tags/`, { headers });
             return res.data;
         } catch (err) {
             let error: ApiErrorResponse = {} as ApiErrorResponse;

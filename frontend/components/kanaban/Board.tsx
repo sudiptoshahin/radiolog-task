@@ -7,6 +7,7 @@ import Column from "./Column";
 import Image from "next/image";
 import TaskModal from "./TaskModal";
 import useTaskStore from "@/store/useTaskStore";
+import KanabanInit from "./KanabanInit";
 
 const kalam = Kalam({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -17,16 +18,16 @@ const COLUMNS: { id: Status; title: string }[] = [
 ];
 
 export const AVAILABLE_TAGS: TaskTag[] = [
-  { id: "t1", label: "Bug" },
-  { id: "t2", label: "Frontend" },
-  { id: "t3", label: "Backend" },
-  { id: "t4", label: "Urgent" },
-  { id: "t5", label: "Design" },
-  { id: "t6", label: "API" },
+    { id: "t1", label: "Bug" },
+    { id: "t2", label: "Frontend" },
+    { id: "t3", label: "Backend" },
+    { id: "t4", label: "Urgent" },
+    { id: "t5", label: "Design" },
+    { id: "t6", label: "API" },
 ];
 
 export default function Board() {
-    const { tasks, isLoading, error, fetchTasks, createTask, updateTask, deleteTask } = useTaskStore();
+    const { tasks, tags, isLoading, error, fetchTasks, createTask, updateTask, deleteTask } = useTaskStore();
     const columnRefs = useRef<Record<Status, HTMLDivElement | null>>({
         TODO: null,
         IN_PROGRESS: null,
@@ -35,14 +36,8 @@ export default function Board() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
 
-    // Load tasks from the API once on mount
-    useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
-
     const handleDropToColumn = useCallback(
         (taskId: string, status: Status) => {
-            // fire the PATCH; store's updateTask already reconciles `tasks` with the server response
             updateTask(taskId, { status });
         },
         [updateTask]
@@ -71,7 +66,7 @@ export default function Board() {
                 priority: task.priority,
                 due_date: task.due_date,
                 status: task.status,
-                tags: task.tags.map((t) => t.id),
+                tags: task.tags.map((t) => (t.id))
             });
         } else {
             await createTask({
@@ -79,13 +74,14 @@ export default function Board() {
                 priority: task.priority,
                 due_date: task.due_date,
                 status: task.status,
-                tags: task.tags.map((t) => t.id),
+                tags: task.tags.map((t) => (t.id ))
             });
         }
     }
 
     return (
         <div className="relative h-full w-full rounded-2xl border-[6px] border-neutral-300 bg-white p-6 shadow-lg">
+            <KanabanInit />
             <h1 className={`${kalam.className} text-center text-3xl font-bold text-neutral-800`}>
                 Kanban
             </h1>
@@ -129,7 +125,7 @@ export default function Board() {
 
             <div>
                 <TaskModal
-                    tags={AVAILABLE_TAGS}
+                    tags={tags}
                     isOpen={modalOpen}
                     onClose={() => setModalOpen(false)}
                     onSubmit={handleTaskSubmit}

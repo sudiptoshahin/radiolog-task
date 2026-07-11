@@ -87,7 +87,7 @@ class TaskSerializer(serializers.ModelSerializer):
     def validate_status(self, value):
         value = value.strip()
 
-        if any(value != status[0] for status in Constants.TASK_STATUS):
+        if not any(value != status[0] for status in Constants.TASK_STATUS):
             raise serializers.ValidationError("Choose a correct status!")
 
         return value
