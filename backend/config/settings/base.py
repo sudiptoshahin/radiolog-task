@@ -36,7 +36,8 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'apps.user.apps.UserConfig',
-    "apps.kanaban.apps.KanabanConfig"
+    "apps.kanaban.apps.KanabanConfig",
+    "apps.annotator.apps.AnnotatorConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

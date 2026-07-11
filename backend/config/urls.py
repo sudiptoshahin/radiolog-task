@@ -13,6 +13,7 @@ urlpatterns = [
     # API's
     path("api/v1/users/", include("apps.user.api.urls", namespace="user_api")),
     path("api/v1/kanabans/", include("apps.kanaban.api.urls", namespace="kanaban_api")),
+    path("api/v1/annotators/", include("apps.annotator.api.urls", namespace="annotator_api"))
 ]
 
 

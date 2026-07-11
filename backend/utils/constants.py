@@ -20,3 +20,13 @@ class Constants:
         ("IN_PROGRESS", "In Progress"),
         ("DONE", "Done")
     )
+
+    ANATOMY_CASE_TYPE = (
+        ("BRAIN", "Brain"),
+        ("HEAD_AND_NECK", "Head And Neck"),
+        ("SPINE", "Spine"),
+        ("CHEST", "Chest"),
+        ("ABDOMEN_AND_PELVIS", "Abdomen And Pelvis"),
+        ("UPPER_LIMB", "Upper Limb"),
+        ("LOWER_LIMB", "Lower Limb")
+    )
