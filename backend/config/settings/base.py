@@ -13,10 +13,7 @@ ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost').split(',')
 CORS_ALLOWED_ORIGINS = config('DAJNGO_CORS_ALLOWED_ORIGINS', default='http://localhost:3000').split(',')
 CORS_ALLOW_METHODS = config('DJANGO_CORS_ALLOW_METHODS', default='DELETE,GET,OPTIONS,PATCH,POST,PUT').split(',')
 CORS_ALLOW_HEADERS = config('DAJNGO_CORS_ALLOW_HEADERS', default='accept,accept-encoding,authorization,content-type,dnt,origin,user-agent,x-csrftoken,x-requested-with,x-client-key,x-api-token,x-app-client,x-request-id').split(',')
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-]
+CSRF_TRUSTED_ORIGINS = config('DJANGO_CSRF_TRUSTED_ORIGINS', default='http://localhost:3000').split(',')
 CORS_ALLOW_CREDENTIALS = False
 
 APPEND_SLASH = True
