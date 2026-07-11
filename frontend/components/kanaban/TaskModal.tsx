@@ -11,7 +11,8 @@ interface TaskModalProps {
   tags: Array<TaskTag>;
   onClose: () => void;
   onSubmit: (task: Task) => void;
-  initialData?: Task; // pass this to open in edit mode; omit for create mode
+  initialData?: Task;
+  selectedDate?: string;
 }
 
 const PRIORITIES: Priority[] = ["LOW", "MEDIUM", "HIGH"];
@@ -34,12 +35,12 @@ function emptyForm() {
     title: "",
     priority: "MEDIUM" as Priority,
     due_date: "",
-    tagIds: [] as string[],
+    tags: [] as string[],
     status: "TODO" as Status,
   };
 }
 
-export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags }: TaskModalProps) {
+export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags, selectedDate }: TaskModalProps) {
   const isEditMode = !!initialData;
 
   const [form, setForm] = useState(emptyForm());
@@ -55,9 +56,17 @@ export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags
         title: initialData.title,
         priority: initialData.priority,
         due_date: initialData.due_date,
-        tagIds: initialData.tags.map((t) => t.id),
+        tags: initialData.tags.map((t) => t.id),
         status: initialData.status,
       });
+    } else if(selectedDate) {
+      setForm({
+        title: "",
+        priority: "MEDIUM",
+        due_date: selectedDate,
+        tags: [],
+        status: "TODO",
+      })
     } else {
       setForm(emptyForm());
     }
@@ -95,9 +104,9 @@ export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags
   function toggleTag(tagId: string) {
     setForm((prev) => ({
       ...prev,
-      tagIds: prev.tagIds.includes(tagId)
-        ? prev.tagIds.filter((id) => id !== tagId)
-        : [...prev.tagIds, tagId],
+      tags: prev.tags.includes(tagId)
+        ? prev.tags.filter((id) => id !== tagId)
+        : [...prev.tags, tagId],
     }));
   }
 
@@ -110,7 +119,7 @@ export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags
     if (Object.keys(validationErrors).length > 0) return;
 
     const selectedTags: TaskTag[] = tags.filter((tag) =>
-      form.tagIds.includes(tag.id)
+      form.tags.includes(tag.id)
     );
 
     const task: Task = {
@@ -200,7 +209,7 @@ export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags
                 <label key={tag.id} className="flex items-center gap-2 text-sm text-neutral-700">
                   <input
                     type="checkbox"
-                    checked={form.tagIds.includes(tag.id)}
+                    checked={form.tags.includes(tag.id)}
                     onChange={() => toggleTag(tag.id)}
                     className="h-4 w-4 rounded border-neutral-300 text-indigo-600 focus:ring-indigo-500"
                   />

@@ -23,6 +23,7 @@ export default function TaskCard({ task, columnRefs, columns, onDropToColumn }: 
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const { color, rotation } = useMemo(() => getNoteStyle(task.id), [task.id]);
+  const [showActionPanel, setShowActionPanel] = useState<boolean>(false);
 
   const TAG_COLOR_PALETTE = [
     { bg: "bg-red-100", text: "text-red-700" },
@@ -51,6 +52,14 @@ export default function TaskCard({ task, columnRefs, columns, onDropToColumn }: 
     }
     const index = Math.abs(hash) % TAG_COLOR_PALETTE.length;
     return TAG_COLOR_PALETTE[index];
+  }
+
+  function handleMouseEnter() {
+    setShowActionPanel(true);
+  }
+
+  function handleMouseLeave() {
+    setShowActionPanel(false);
   }
 
   const handleStop = useCallback(
@@ -102,17 +111,22 @@ export default function TaskCard({ task, columnRefs, columns, onDropToColumn }: 
           minWidth: 120,
           minHeight: 80
         }}
-        className={`relative w-full cursor-grab select-none rounded-sm p-3 shadow-md active:cursor-grabbing ${dragging ? "shadow-xl" : ""
-          }`}
-      >
+        className={`relative w-full cursor-grab select-none rounded-sm p-3 shadow-md active:cursor-grabbing ${dragging ? "shadow-xl" : ""}`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}>
         <div
           style={{ backgroundColor: color.tape }}
           className="absolute -top-2 right-0 h-4 w-10 -translate-x-1/2 rotate-1 opacity-70"
         >
-          <div className="w-full flex items-center justify-around">
-            <Image src="/images/icons/edit.svg" width={14} height={14} alt="edit-task" className="cursour-pointer" onClick={() => handleTaskEdit(task)} />
-            <Image src="/images/icons/delete.svg" width={14} height={14} alt="delete-task" className="cursour-pointer" onClick={() => handleTaskDelete(task.id)} />
-          </div>
+          {
+            showActionPanel ? (
+              <div className="w-full flex items-center justify-around">
+                <Image src="/images/icons/edit.svg" width={14} height={14} alt="edit-task" className="cursour-pointer" onClick={() => handleTaskEdit(task)} />
+                <Image src="/images/icons/delete.svg" width={14} height={14} alt="delete-task" className="cursour-pointer" onClick={() => handleTaskDelete(task.id)} />
+              </div>
+            ) : ''
+          }
+
         </div>
 
         <p className={`${kalam.className} text-[15px] leading-snug text-neutral-800`}>

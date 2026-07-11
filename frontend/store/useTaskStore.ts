@@ -11,7 +11,7 @@ interface TaskStore {
     error: string | null;
 
     fetchTags: () => Promise<void>;
-    fetchTasks: () => Promise<void>;
+    fetchTasks: (date?: string) => Promise<void>;
     createTask: (payload: TaskCreatePayload) => Promise<Task | null>;
     getTaskById: (taskId: string) => Promise<Task | null>;
     updateTask: (taskId: string, payload: TaskUpdatePayload) => Promise<Task | null>;
@@ -46,12 +46,12 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
         set({ tags: res?.results, isLoading: false });
     },
 
-    fetchTasks: async () => {
+    fetchTasks: async (dueDate: string="") => {
         set({ isLoading: true, error: null });
-        const res = await ApiService.ALL_TASKS();
+        const res = await ApiService.ALL_TASKS(dueDate);
 
-        if (isTaskArray(res?.results)) {
-            set({ tasks: res?.results, isLoading: false });
+        if (isTaskArray(res?.data)) {
+            set({ tasks: res?.data, isLoading: false });
         } else {
             const err = res as ApiErrorResponse;
             set({ error: err.message ?? err?.detail ?? "Failed to fetch tasks.", isLoading: false });

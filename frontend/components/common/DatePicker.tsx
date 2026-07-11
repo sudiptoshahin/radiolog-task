@@ -31,6 +31,8 @@ function toISODate(year: number, month: number, day: number) {
 export default function DatePicker({ value, onChange, label, minDate, error }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelAlign, setPanelAlign] = useState<"left" | "right">("left");
 
   const selected = toDateOnly(value);
   const [viewDate, setViewDate] = useState(() => selected ?? new Date());
@@ -44,6 +46,36 @@ export default function DatePicker({ value, onChange, label, minDate, error }: D
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Decide whether the panel should hang from the left or right edge of
+  // the trigger, based on available viewport space. Recalculated every
+  // time the panel opens, and on resize/scroll while it's open.
+  useEffect(() => {
+    if (!open) return;
+
+    function updateAlignment() {
+      const containerEl = containerRef.current;
+      const panelEl = panelRef.current;
+      if (!containerEl) return;
+
+      const containerRect = containerEl.getBoundingClientRect();
+      // Fall back to the panel's own rendered width (w-64 = 256px) before
+      // it has painted/measured on the very first open.
+      const panelWidth = panelEl?.offsetWidth ?? 256;
+      const spaceOnRight = window.innerWidth - containerRect.left;
+
+      setPanelAlign(spaceOnRight < panelWidth ? "right" : "left");
+    }
+
+    // Measure once after mount, then keep it correct on resize/scroll.
+    updateAlignment();
+    window.addEventListener("resize", updateAlignment);
+    window.addEventListener("scroll", updateAlignment, true);
+    return () => {
+      window.removeEventListener("resize", updateAlignment);
+      window.removeEventListener("scroll", updateAlignment, true);
+    };
+  }, [open]);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -80,9 +112,8 @@ export default function DatePicker({ value, onChange, label, minDate, error }: D
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-          error ? "border-red-400" : "border-neutral-300"
-        }`}
+        className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${error ? "border-red-400" : "border-neutral-300"
+          }`}
       >
         <span className={selected ? "text-neutral-800" : "text-neutral-400"}>
           {formatDisplay(value)}
@@ -92,7 +123,11 @@ export default function DatePicker({ value, onChange, label, minDate, error }: D
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
 
       {open && (
-        <div className="absolute z-20 mt-2 w-64 rounded-xl border border-neutral-200 bg-white p-3 shadow-lg">
+        <div
+          ref={panelRef}
+          className={`absolute z-20 mt-2 w-64 rounded-xl border border-neutral-200 bg-white p-3 shadow-lg ${panelAlign === "right" ? "right-0" : "left-0"
+            }`}
+        >
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
@@ -131,15 +166,14 @@ export default function DatePicker({ value, onChange, label, minDate, error }: D
                     onChange(toISODate(year, month, d));
                     setOpen(false);
                   }}
-                  className={`h-8 w-8 rounded-full text-sm transition ${
-                    d === null
-                      ? "invisible"
-                      : isSelected(d)
+                  className={`h-8 w-8 rounded-full text-sm transition ${d === null
+                    ? "invisible"
+                    : isSelected(d)
                       ? "bg-indigo-600 text-white"
                       : isDisabled(d)
-                      ? "cursor-not-allowed text-neutral-300"
-                      : "text-neutral-700 hover:bg-indigo-50"
-                  }`}
+                        ? "cursor-not-allowed text-neutral-300"
+                        : "text-neutral-700 hover:bg-indigo-50"
+                    }`}
                 >
                   {d}
                 </button>

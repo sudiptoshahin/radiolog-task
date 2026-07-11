@@ -68,10 +68,16 @@ export default class ApiService {
         }
     }
 
-    static async ALL_TASKS() {
+
+    static async ALL_TASKS(dueDate?: string) {
         try {
             const headers = this.getHeader();
-            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + "/kanabans/tasks/", { headers });
+            const params = dueDate ? { due_date: dueDate } : undefined;
+
+            const res = await axios.get(
+                process.env.NEXT_PUBLIC_API_BASE_URL + "/kanabans/tasks/",
+                { headers, params }
+            );
             return res.data;
         } catch (err) {
             let error: ApiErrorResponse = {} as ApiErrorResponse;

@@ -11,6 +11,7 @@ from apps.kanaban.models import Tag, Task
 from apps.kanaban.api.serializers import TagSerializer, TaskSerializer
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from uuid import UUID, uuid4
+from django.utils.dateparse import parse_date
 
 
 class TagListCreateView(APIView):
@@ -80,15 +81,25 @@ class TaskListCreateView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get(self, request, *args, **kwargs):
-        # qs = Task.objects.prefetch_related("tags").all()
+        due_date = request.GET.get("due_date")
         qs = Task.objects.prefetch_related(
             Prefetch("tags", queryset=Tag.objects.only("id", "label", "value"))
         )
 
-        paginator = self.pagination_classes()
-        page = paginator.paginate_queryset(queryset=qs, request=request, view=self)
-        serializer = TaskSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        if due_date:
+            date = parse_date(due_date)
+            if date is None:
+                return Response(
+                    {"detail": "Invalid due_date format. Expected YYYY-MM-DD."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            qs = qs.filter(due_date__date=date)
+
+        serializer = TaskSerializer(qs, many=True)
+        return Response(
+            { "data": serializer.data },
+            status=status.HTTP_200_OK
+        )
 
 
 @api_view(["GET"])

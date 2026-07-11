@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Kalam } from "next/font/google";
 import { Task, Status, TaskTag } from "../../models/tasks";
 import Column from "./Column";
@@ -10,6 +10,9 @@ import useTaskStore from "@/store/useTaskStore";
 import KanabanInit from "./KanabanInit";
 import { TaskActionsProvider } from "@/context/TaskActionContext";
 import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
+import DatePicker from "../common/DatePicker";
+import { ClipboardList } from "lucide-react";
+
 
 const kalam = Kalam({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -29,7 +32,7 @@ export const AVAILABLE_TAGS: TaskTag[] = [
 ];
 
 export default function Board() {
-    const { tasks, tags, isLoading, error, createTask, updateTask, deleteTask } = useTaskStore();
+    const { tasks, tags, isLoading, error, fetchTasks, createTask, updateTask, deleteTask } = useTaskStore();
     const [taskPendingDelete, setTaskPendingDelete] = useState<Task | null>(null);
     const columnRefs = useRef<Record<Status, HTMLDivElement | null>>({
         TODO: null,
@@ -38,6 +41,7 @@ export default function Board() {
     });
     const [modalOpen, setModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+    const [dateFilter, setDateFilter] = useState<string>("");
 
     const handleDropToColumn = useCallback(
         (taskId: string, status: Status) => {
@@ -99,12 +103,38 @@ export default function Board() {
 
     const cancelDelete = () => setTaskPendingDelete(null);
 
+    function onHandleFilterClear() {
+        setDateFilter("");
+        fetchTasks();
+    }
+
+    useEffect(() => {
+        if (!Boolean(dateFilter)) return;
+        fetchTasks(dateFilter);
+    }, [dateFilter]);
+
     return (
         <div className="relative h-full w-full rounded-2xl border-[6px] border-neutral-300 bg-white p-6 shadow-lg">
             <KanabanInit />
-            <h1 className={`${kalam.className} text-center text-3xl font-bold text-neutral-800`}>
-                Kanban
-            </h1>
+            <div className="w-full flex justify-between">
+                <h1 className={`${kalam.className} text-center text-3xl font-bold text-neutral-800`}>
+                    Kanban
+                </h1>
+
+                <div className="flex items-center space-x-2">
+                    <DatePicker
+                        label=""
+                        value={dateFilter}
+                        onChange={(date) => {
+                            const dateOnly = date.split("T")[0]
+                            setDateFilter(dateOnly);
+                        }}
+                        minDate={new Date()}
+                    />
+
+                    <button className="bg-red-200 text-red-500 w-[80px] h-[30px] rounded-lg" onClick={onHandleFilterClear}>Clear</button>
+                </div>
+            </div>
             <div className="mx-auto mt-2 h-[2px] w-full bg-neutral-800" />
 
             {error && (
@@ -117,6 +147,20 @@ export default function Board() {
                 <p className={`${kalam.className} mt-10 text-center text-neutral-400`}>
                     Loading tasks...
                 </p>
+            ) : tasks.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-neutral-100">
+                        <ClipboardList className="h-7 w-7 text-neutral-400" />
+                    </div>
+                    <div>
+                        <p className={`${kalam.className} text-lg font-semibold text-neutral-700`}>
+                            No tasks yet
+                        </p>
+                        <p className="mt-1 text-sm text-neutral-400">
+                            Tap the <span className="font-medium text-neutral-500">+</span> button below to add your first task.
+                        </p>
+                    </div>
+                </div>
             ) : (
                 <TaskActionsProvider handleTaskEdit={onHandleTaskEdit} handleTaskDelete={onHandleTaskDelete}>
                     <div className="relative mt-4 grid grid-cols-1 gap-0 sm:grid-cols-3">
@@ -151,6 +195,7 @@ export default function Board() {
                     isOpen={modalOpen}
                     onClose={() => setModalOpen(false)}
                     onSubmit={handleTaskSubmit}
+                    selectedDate={dateFilter}
                     initialData={editingTask}
                 />
             </div>
