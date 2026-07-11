@@ -27,16 +27,35 @@ interface UserStore {
     clearUser: () => void;
 }
 
-// Decodes a JWT's payload and returns its `exp` claim in milliseconds.
-// Returns 0 if the token is malformed so callers can fail safe.
+
 function getTokenExpiry(token: string): number {
     try {
         const payload = token.split(".")[1];
+        // Base64 to string
         const decoded = JSON.parse(atob(payload));
         return typeof decoded.exp === "number" ? decoded.exp * 1000 : 0;
     } catch {
         return 0;
     }
+}
+
+// Sets the access_token cookie so middleware (server-side) can read it.
+// expiresAtMs is the token's exp claim in milliseconds since epoch.
+function setAccessTokenCookie(token: string, expiresAtMs: number) {
+    if (typeof document === "undefined") return; // SSR guard
+
+    const expires = expiresAtMs
+        ? new Date(expiresAtMs).toUTCString()
+        : "";
+
+    document.cookie = `access_token=${token}; path=/; expires=${expires}; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`;
+}
+
+// Clears the access_token cookie.
+function clearAccessTokenCookie() {
+    if (typeof document === "undefined") return; // SSR guard
+
+    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
 }
 
 const useUserStore = create<UserStore>()(
@@ -47,21 +66,26 @@ const useUserStore = create<UserStore>()(
             expiresAt: 0,
             isLoggedIn: false,
 
-            setUser: (data: LoginResponse) =>
+            setUser: (data: LoginResponse) => {
+                const expiresAt = getTokenExpiry(data.tokens.access);
+                setAccessTokenCookie(data.tokens.access, expiresAt);
                 set({
                     user: data.user,
                     tokens: data.tokens,
-                    expiresAt: getTokenExpiry(data.tokens.access),
+                    expiresAt,
                     isLoggedIn: true,
-                }),
+                });
+            },
 
-            clearUser: () =>
+            clearUser: () => {
+                clearAccessTokenCookie();
                 set({
                     user: null,
                     tokens: null,
                     expiresAt: 0,
                     isLoggedIn: false,
-                }),
+                });
+            },
         }),
         {
             name: "user",
