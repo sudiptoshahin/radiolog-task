@@ -156,7 +156,7 @@ export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags
                 setErrors(validate(form));
               }}
               placeholder="e.g. Fix login bug"
-              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+              className={`w-full text-black rounded-lg  border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                 errors.title ? "border-red-400" : "border-neutral-300"
               }`}
             />
@@ -169,7 +169,7 @@ export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags
             <select
               value={form.priority}
               onChange={(e) => setForm((prev) => ({ ...prev, priority: e.target.value as Priority }))}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full text-black rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>
@@ -216,7 +216,7 @@ export default function TaskModal({ isOpen, onClose, onSubmit, initialData, tags
             <select
               value={form.status}
               onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value as Status }))}
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full text-black rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {STATUSES.map((s) => (
                 <option key={s.id} value={s.id}>

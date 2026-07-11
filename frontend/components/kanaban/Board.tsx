@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback } from "react";
 import { Kalam } from "next/font/google";
 import { Task, Status, TaskTag } from "../../models/tasks";
 import Column from "./Column";
@@ -8,6 +8,8 @@ import Image from "next/image";
 import TaskModal from "./TaskModal";
 import useTaskStore from "@/store/useTaskStore";
 import KanabanInit from "./KanabanInit";
+import { TaskActionsProvider } from "@/context/TaskActionContext";
+import DeleteConfirmationModal from "../common/DeleteConfirmationModal";
 
 const kalam = Kalam({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -27,7 +29,8 @@ export const AVAILABLE_TAGS: TaskTag[] = [
 ];
 
 export default function Board() {
-    const { tasks, tags, isLoading, error, fetchTasks, createTask, updateTask, deleteTask } = useTaskStore();
+    const { tasks, tags, isLoading, error, createTask, updateTask, deleteTask } = useTaskStore();
+    const [taskPendingDelete, setTaskPendingDelete] = useState<Task | null>(null);
     const columnRefs = useRef<Record<Status, HTMLDivElement | null>>({
         TODO: null,
         IN_PROGRESS: null,
@@ -74,10 +77,27 @@ export default function Board() {
                 priority: task.priority,
                 due_date: task.due_date,
                 status: task.status,
-                tags: task.tags.map((t) => (t.id ))
+                tags: task.tags.map((t) => (t.id))
             });
         }
     }
+
+    function onHandleTaskEdit(task: Task): void {
+        openEditModal(task);
+    }
+
+    function onHandleTaskDelete(taskId: string): void {
+        const task = tasks.find((t) => t.id === taskId);
+        if (task) setTaskPendingDelete(task);
+    }
+
+    const confirmDelete = () => {
+        if (!taskPendingDelete) return;
+        deleteTask(taskPendingDelete.id);
+        setTaskPendingDelete(null);
+    };
+
+    const cancelDelete = () => setTaskPendingDelete(null);
 
     return (
         <div className="relative h-full w-full rounded-2xl border-[6px] border-neutral-300 bg-white p-6 shadow-lg">
@@ -98,22 +118,24 @@ export default function Board() {
                     Loading tasks...
                 </p>
             ) : (
-                <div className="relative mt-4 grid grid-cols-1 gap-0 sm:grid-cols-3">
-                    <div className="pointer-events-none absolute inset-y-0 left-1/3 hidden w-[2px] bg-neutral-800 sm:block" />
-                    <div className="pointer-events-none absolute inset-y-0 left-2/3 hidden w-[2px] bg-neutral-800 sm:block" />
+                <TaskActionsProvider handleTaskEdit={onHandleTaskEdit} handleTaskDelete={onHandleTaskDelete}>
+                    <div className="relative mt-4 grid grid-cols-1 gap-0 sm:grid-cols-3">
+                        <div className="pointer-events-none absolute inset-y-0 left-1/3 hidden w-[2px] bg-neutral-800 sm:block" />
+                        <div className="pointer-events-none absolute inset-y-0 left-2/3 hidden w-[2px] bg-neutral-800 sm:block" />
 
-                    {COLUMNS.map((col) => (
-                        <Column
-                            key={col.id}
-                            id={col.id}
-                            title={col.title}
-                            tasks={tasks.filter((t) => t.status === col.id)}
-                            columns={COLUMNS}
-                            columnRefs={columnRefs}
-                            onDropToColumn={handleDropToColumn}
-                        />
-                    ))}
-                </div>
+                        {COLUMNS.map((col) => (
+                            <Column
+                                key={col.id}
+                                id={col.id}
+                                title={col.title}
+                                tasks={tasks.filter((t) => t.status === col.id)}
+                                columns={COLUMNS}
+                                columnRefs={columnRefs}
+                                onDropToColumn={handleDropToColumn}
+                            />
+                        ))}
+                    </div>
+                </TaskActionsProvider>
             )}
 
             <div
@@ -130,6 +152,14 @@ export default function Board() {
                     onClose={() => setModalOpen(false)}
                     onSubmit={handleTaskSubmit}
                     initialData={editingTask}
+                />
+            </div>
+            <div className="">
+                <DeleteConfirmationModal
+                    isOpen={taskPendingDelete !== null}
+                    taskTitle={taskPendingDelete?.title ?? ""}
+                    onConfirm={confirmDelete}
+                    onCancel={cancelDelete}
                 />
             </div>
         </div>

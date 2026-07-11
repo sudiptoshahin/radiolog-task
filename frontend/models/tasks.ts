@@ -37,3 +37,10 @@ export interface TaskUpdatePayload {
   tags?: Array<string>;
   status?: Status;
 }
+
+export interface DeleteConfirmationModalProps {
+  isOpen: boolean;
+  taskTitle: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
