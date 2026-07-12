@@ -43,13 +43,47 @@ class AnatomyImage(models.Model):
         verbose_name = _("Anatomy Image")
         verbose_name_plural = _("Anatomy Images")
 
+class AnatomyCaseType(TimeStampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    title = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=150, unique=True, blank=True, null=True)
+    
+    class Meta:
+        verbose_name = _("Anatomy Case Type")
+        verbose_name_plural = _("Anatomy Case Types")
+
+        constraints = (
+            models.UniqueConstraint(fields=("title", ), name="uniq_title"),
+        )
+
+        indexes = (
+            models.Index(fields=("id", )),
+            models.Index(fields=("slug", ))
+        )
+
+    def clean(self):
+        if not self.title:
+            raise ValidationError({"title": _("Title cannot be empty")})
+        self.title = self.title.strip()
+        qs = AnatomyCaseType.objects.filter(title__iexact=self.title)
+        
+        if qs.exists():
+            raise ValidationError({"title": _("Case type is already exists")}, code="duplicate_case_type")
+        
+    def save(self, *args, **kwargs):
+        super().full_clean()
+        if not self.slug:
+            self.slug = slugify(self.title)
+        
+        super().save(*args, **kwargs)
 
 
 class AnatomyCase(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     title = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=150, unique=True, blank=True)
-    case_type = models.CharField(max_length=100, choices=Constants.ANATOMY_CASE_TYPE)
+    # case_type = models.CharField(max_length=100, choices=Constants.ANATOMY_CASE_TYPE)
+    case_type = models.ForeignKey("AnatomyCaseType", on_delete=models.SET_NULL, null=True, blank=True, related_name="cases")
     description = models.TextField(blank=True)
 
     class Meta:
