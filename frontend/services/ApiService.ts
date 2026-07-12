@@ -157,4 +157,18 @@ export default class ApiService {
             return error;
         }
     }
+
+    static async ALL_ANATOMY_CASES() {
+        try {
+            const headers = this.getHeader();
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + `/annotators/`, { headers });
+            return res.data;
+        } catch (err) {
+            let error: ApiErrorResponse = {} as ApiErrorResponse;
+            if (axios.isAxiosError<ApiErrorResponse>(err)) {
+                error = err?.response?.data as ApiErrorResponse;
+            }
+            return error;
+        }
+    }
 }
