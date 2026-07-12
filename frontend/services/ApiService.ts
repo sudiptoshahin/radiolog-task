@@ -171,4 +171,32 @@ export default class ApiService {
             return error;
         }
     }
+
+    static async ANATOMY_CASE_TYPES() {
+        try {
+            const headers = this.getHeader();
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + `/annotators/types/`, { headers });
+            return res.data;
+        } catch (err) {
+            let error: ApiErrorResponse = {} as ApiErrorResponse;
+            if (axios.isAxiosError<ApiErrorResponse>(err)) {
+                error = err?.response?.data as ApiErrorResponse;
+            }
+            return error;
+        }
+    }
+
+    static async GET_ANATOMY_CASE(slug: string) {
+        try {
+            const headers = this.getHeader();
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + `/annotators/case/${slug}/`, { headers });
+            return res.data;
+        } catch (err) {
+            let error: ApiErrorResponse = {} as ApiErrorResponse;
+            if (axios.isAxiosError<ApiErrorResponse>(err)) {
+                error = err?.response?.data as ApiErrorResponse;
+            }
+            return error;
+        }
+    }
 }
