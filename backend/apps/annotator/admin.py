@@ -2,7 +2,12 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from apps.annotator.models import AnatomyCase, AnatomyImage, AnnotatedImage
+from apps.annotator.models import (
+    AnatomyCase,
+    AnatomyCaseType,
+    AnatomyImage,
+    AnnotatedImage,
+)
 
 
 class ImagePreviewMixin:
@@ -36,6 +41,25 @@ class AnnotatedImageInline(ImagePreviewMixin, admin.TabularInline):
     show_change_link = True
 
 
+@admin.register(AnatomyCaseType)
+class AnatomyCaseTypeAdmin(admin.ModelAdmin):
+    list_display = ("title", "slug", "created_at", "updated_at")
+    search_fields = ("title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
+    readonly_fields = ("id", "created_at", "updated_at")
+    ordering = ("title",)
+
+    fieldsets = (
+        (None, {
+            "fields": ("title", "slug"),
+        }),
+        (_("Metadata"), {
+            "fields": ("id", "created_at", "updated_at"),
+            "classes": ("collapse",),
+        }),
+    )
+
+
 @admin.register(AnatomyCase)
 class AnatomyCaseAdmin(admin.ModelAdmin):
     list_display = ("title", "case_type", "image_count", "annotated_image_count", "created_at")
@@ -43,6 +67,7 @@ class AnatomyCaseAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug", "description")
     prepopulated_fields = {"slug": ("title",)}
     readonly_fields = ("id", "created_at", "updated_at")
+    autocomplete_fields = ("case_type",)
     ordering = ("-created_at",)
     inlines = [AnatomyImageInline, AnnotatedImageInline]
 
@@ -58,7 +83,7 @@ class AnatomyCaseAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.prefetch_related("images", "annotated_images")
+        return qs.select_related("case_type").prefetch_related("images", "annotated_images")
 
     @admin.display(description=_("Images"))
     def image_count(self, obj):

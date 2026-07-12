@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.annotator.models import AnatomyCase, AnatomyImage, AnnotatedImage
+from apps.annotator.models import AnatomyCase, AnatomyImage, AnnotatedImage, AnatomyCaseType
 from django.core.exceptions import ValidationError
 
 class AnatomyImageSerializer(serializers.ModelSerializer):
@@ -15,10 +15,16 @@ class AnnotatedImageSerializer(serializers.ModelSerializer):
         fields = ("id", "case", "image",)
         read_only_fields = ("id", )
 
+class AnatomyCaseTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnatomyCaseType
+        fields = ("id", "title", "slug")
+        read_only_fields = ("id", "slug")
 
 class AnatomyCaseSerializer(serializers.ModelSerializer):
     images = AnatomyImageSerializer(many=True, read_only=True)
     annotated_images = AnnotatedImageSerializer(many=True, read_only=True)
+    case_type = AnatomyCaseTypeSerializer(many=False)
     class Meta:
         model = AnatomyCase
         fields = (
@@ -81,3 +87,22 @@ class AnatomyCaseListSerializer(serializers.ModelSerializer):
         )
 
         read_only_fields = fields
+
+
+class AnatomyCaseReadSerializer(serializers.ModelSerializer):
+    image_count = serializers.IntegerField()
+    annotated_image_count = serializers.IntegerField()
+
+    class Meta:
+        model = AnatomyCase
+        fields = ("id", "title", "slug", "image_count", "annotated_image_count", "created_at")
+        read_only_fields = fields
+
+
+class AnatomyCaseTypesListSerializer(serializers.ModelSerializer):
+    cases = AnatomyCaseReadSerializer(many=True)
+
+    class Meta:
+        model = AnatomyCaseType
+        fields = ("id", "title", "slug", "cases", "created_at")
+        read_only_fields = ("id", "slug", "created_at")
