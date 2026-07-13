@@ -53,3 +53,4 @@ Then Login and create Tags for Kanaban task
 Main challenge actually faced in database design for the annotator. How the relationship will work how to structure the response for the frontend and how the annotation region will save.
 
 2. __Difficulties faced in frontend__
+Frontend difficulties is completely the annotation section. Another difficulties i've face, that after live hosting when i move kanaban from one column to another it shows a delay. And the solition i found from Claude is Optimistic Ui Update.
