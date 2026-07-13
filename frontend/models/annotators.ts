@@ -63,3 +63,42 @@ export interface IAnnotationCase {
   updated_at: string;
 }
 
+
+// {
+//     "class_label": "TUMOR",
+//     "annotated_color": "#dc2626",
+//     "image": "eac5faaa-c92c-45e2-afcf-602835a727c9",
+//     "points": [
+//         {
+//             "x": 39.03439649781113,
+//             "y": 34.03846153846154
+//         },
+//         {
+//             "x": 43.036898061288305,
+//             "y": 37.88461538461539
+//         },
+//         {
+//             "x": 41.275797373358344,
+//             "y": 43.07692307692308
+//         },
+//         {
+//             "x": 35.512195121951216,
+//             "y": 39.80769230769231
+//         }
+//     ],
+//     "closed": false
+// }
+
+
+interface Point {
+    x: number;
+    y: number;
+}
+
+export interface IAnnotationPayload {
+    class_label: string;
+    annotated_color: string;
+    image: string;
+    points: Array<Point>;
+}
+

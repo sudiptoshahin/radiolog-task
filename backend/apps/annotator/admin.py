@@ -6,7 +6,7 @@ from apps.annotator.models import (
     AnatomyCase,
     AnatomyCaseType,
     AnatomyImage,
-    AnnotatedImage,
+    # AnnotatedImage,
 )
 
 
@@ -33,12 +33,12 @@ class AnatomyImageInline(ImagePreviewMixin, admin.TabularInline):
     show_change_link = True
 
 
-class AnnotatedImageInline(ImagePreviewMixin, admin.TabularInline):
-    model = AnnotatedImage
-    extra = 1
-    fields = ("image_preview", "image", "image_width", "image_height")
-    readonly_fields = ("image_preview", "image_width", "image_height")
-    show_change_link = True
+# class AnnotatedImageInline(ImagePreviewMixin, admin.TabularInline):
+#     model = AnnotatedImage
+#     extra = 1
+#     fields = ("image_preview", "image", "image_width", "image_height")
+#     readonly_fields = ("image_preview", "image_width", "image_height")
+#     show_change_link = True
 
 
 @admin.register(AnatomyCaseType)
@@ -69,7 +69,7 @@ class AnatomyCaseAdmin(admin.ModelAdmin):
     readonly_fields = ("id", "created_at", "updated_at")
     autocomplete_fields = ("case_type",)
     ordering = ("-created_at",)
-    inlines = [AnatomyImageInline, AnnotatedImageInline]
+    inlines = [AnatomyImageInline]
 
     fieldsets = (
         (None, {
@@ -106,13 +106,13 @@ class AnatomyImageAdmin(ImagePreviewMixin, admin.ModelAdmin):
     fields = ("case", "image", "image_preview", "image_width", "image_height", "id")
 
 
-@admin.register(AnnotatedImage)
-class AnnotatedImageAdmin(ImagePreviewMixin, admin.ModelAdmin):
-    list_display = ("image_preview", "case", "image_width", "image_height", "created_at")
-    list_filter = ("case", "created_at")
-    search_fields = ("case__title",)
-    readonly_fields = ("id", "image_preview", "image_width", "image_height", "created_at", "updated_at")
-    autocomplete_fields = ("case",)
-    list_select_related = ("case",)
+# @admin.register(AnnotatedImage)
+# class AnnotatedImageAdmin(ImagePreviewMixin, admin.ModelAdmin):
+#     list_display = ("image_preview", "case", "image_width", "image_height", "created_at")
+#     list_filter = ("case", "created_at")
+#     search_fields = ("case__title",)
+#     readonly_fields = ("id", "image_preview", "image_width", "image_height", "created_at", "updated_at")
+#     autocomplete_fields = ("case",)
+#     list_select_related = ("case",)
 
-    fields = ("case", "image", "image_preview", "image_width", "image_height", "id", "created_at", "updated_at")
+#     fields = ("case", "image", "image_preview", "image_width", "image_height", "id", "created_at", "updated_at")

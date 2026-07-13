@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useParams } from "next/navigation";
 import useAnnotatorStore from "@/store/useAnnotatorStore";
+import { IAnnotationPayload } from "@/models/annotators";
 
 /* ============================================================================
  * TYPES — matches the shape of the object you get back from the API
@@ -60,17 +61,16 @@ type Tool = "draw" | "delete";
  * ==========================================================================*/
 
 const CLASS_OPTIONS = [
-  { value: "tumor", label: "Tumor", color: "#dc2626" },
-  { value: "edema", label: "Edema", color: "#2563eb" },
-  { value: "necrosis", label: "Necrosis", color: "#7c3aed" },
-  { value: "hemorrhage", label: "Hemorrhage", color: "#ea580c" },
+  { value: "TUMOR", label: "Tumor", color: "#dc2626" },
+  { value: "EDEMA", label: "Edema", color: "#2563eb" },
+  { value: "NECROSIS", label: "Necrosis", color: "#7c3aed" },
   { value: "other", label: "Other", color: "#059669" },
 ] as const;
 
 const ZOOM_MIN = 1;
 const ZOOM_MAX = 4;
 const ZOOM_STEP = 0.25;
-const CLOSE_THRESHOLD = 3; // % distance to first point that closes a polygon
+const CLOSE_THRESHOLD = 3;
 const WHEEL_NAV_COOLDOWN_MS = 350;
 
 /* ============================================================================
@@ -184,11 +184,13 @@ function pointsToPath(points: Point[], closed: boolean) {
 
 export default function AnnotateImage() {
   const { slug } = useParams<{ slug: string }>();
-  const { getCase, isLoading } = useAnnotatorStore();
+  const { getCase, isLoading, saveAnnotationByImage } = useAnnotatorStore();
 
   const [caseObj, setCaseObj] = useState<IAnnotationCase>(
     {} as IAnnotationCase,
   );
+
+  console.log('__case_obj___', caseObj)
 
   useEffect(() => {
     if (!slug) return;
@@ -237,7 +239,7 @@ export default function AnnotateImage() {
   const svgRef = useRef<SVGSVGElement>(null);
   const wheelCooldownRef = useRef(0);
 
-  console.log('__state_vars___', {currentIndex, currentImage, ctWindow, annotationsByImage});
+  console.log('__state_vars___', { drawingAnnotation });
 
   const draggingRef = useRef<{
     annotationId: string;
@@ -249,7 +251,7 @@ export default function AnnotateImage() {
     (currentImage && annotationsByImage[currentImage.id]) || [];
 
 
-    useEffect(() => {
+  useEffect(() => {
     if (!caseObj.id) return;
 
     // Jump back to the first slice and clear any in-progress
@@ -262,7 +264,7 @@ export default function AnnotateImage() {
     try {
       const raw = localStorage.getItem(`annotations_${caseObj.id}`);
       const parsed: AnnotationMap = raw ? JSON.parse(raw) : {};
-      console.log('__data___', {raw, parsed})
+      console.log('__data___', { raw, parsed })
       setAnnotationsByImage(parsed);
       setHistory([parsed]);
       setHistoryIndex(0);
@@ -290,6 +292,8 @@ export default function AnnotateImage() {
     );
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1600);
+
+    console.log('___annotationsByImage___', annotationsByImage);
   }
 
   function handleUndo() {
@@ -385,7 +389,6 @@ export default function AnnotateImage() {
   }, [naturalSize]);
 
   /* ---------------- Drawing / editing annotations ---------------- */
-
   function getRelativePoint(e: { clientX: number; clientY: number }): Point {
     const svg = svgRef.current;
     if (!svg) return { x: 0, y: 0 };
@@ -396,12 +399,14 @@ export default function AnnotateImage() {
   }
 
   function handleSvgClick(e: React.MouseEvent) {
-    if (draggingRef.current) return; // just finished a drag, ignore the click
+    if (draggingRef.current) return;
     if (tool !== "draw" || !currentImage) return;
 
     const pt = getRelativePoint(e);
 
     if (drawingAnnotation) {
+
+      // calculate euclidean distance of 2 points
       const first = drawingAnnotation.points[0];
       const dist = Math.hypot(pt.x - first.x, pt.y - first.y);
       if (drawingAnnotation.points.length >= 3 && dist < CLOSE_THRESHOLD) {
@@ -415,7 +420,7 @@ export default function AnnotateImage() {
     } else {
       setDrawingAnnotation({
         id: uid(),
-        classLabel: activeClassInfo.label,
+        classLabel: activeClassInfo.value,
         color: activeClassInfo.color,
         points: [pt],
         closed: false,
@@ -429,7 +434,18 @@ export default function AnnotateImage() {
     }
   }
 
-  function finishAnnotation(ann: Annotation) {
+
+  async function finishAnnotation(ann: Annotation) {
+    const payload = {
+      class_label: drawingAnnotation?.classLabel,
+      annotated_color: drawingAnnotation?.color,
+      image: currentImage.id,
+      points: drawingAnnotation?.points,
+      closed: drawingAnnotation?.closed
+    } as IAnnotationPayload
+
+    await saveAnnotationByImage(payload);
+
     if (!currentImage) return;
     const next: AnnotationMap = {
       ...annotationsByImage,

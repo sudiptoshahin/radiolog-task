@@ -71,7 +71,7 @@ export default function Annotator() {
                                                 className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm text-gray-700 ring-1 ring-green-100 transition-colors hover:bg-green-50 hover:ring-green-200 cursor-pointer"
                                                 onClick={() => handleRedirectToAnnotate(case_.slug)}>
                                                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
-                                                {case_.title}
+                                                {case_.title} - ({case_.image_count})
                                             </li>
                                         ))}
                                     </ul>

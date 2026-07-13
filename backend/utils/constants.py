@@ -30,3 +30,10 @@ class Constants:
         ("UPPER_LIMB", "Upper Limb"),
         ("LOWER_LIMB", "Lower Limb")
     )
+
+    ANNOTATION_CLASS_LABELS = (
+        ("TUMOR", "Tumor"),
+        ("EDIMA", "Edima"),
+        ("NECROSIS", "Necrosis"),
+        ("OTHER", "Other")
+    )

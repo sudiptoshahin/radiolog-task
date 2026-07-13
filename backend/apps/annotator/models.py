@@ -116,21 +116,18 @@ class AnatomyCase(TimeStampedModel):
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
 
-
-class AnnotatedImage(TimeStampedModel):
+class Annotation(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    case = models.ForeignKey("AnatomyCase", on_delete=models.CASCADE, related_name="annotated_images")
-    image = models.ImageField(
-        upload_to=ImageUploadPath("annotated_images"),
-        validators=[
-            FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png", "webp"]),
-        ],
-        height_field="image_height",
-        width_field="image_width"
-    )
-    image_height = models.PositiveIntegerField(editable=False, null=True, blank=True)
-    image_width = models.PositiveIntegerField(editable=False, null=True, blank=True)
+    image = models.ForeignKey("AnatomyImage", on_delete=models.CASCADE, related_name="annotations")
+    class_label = models.CharField(max_length=100, choices=Constants.ANNOTATION_CLASS_LABELS, blank=False, null=False)
+    annotated_color = models.CharField(max_length=20, blank=False, null=False)
+    points = models.JSONField()
+    is_closed = models.BooleanField(default=False)
 
     class Meta:
-        verbose_name = _("Annotated Image")
-        verbose_name_plural = _("Annotated Images")
+        verbose_name = _("Annotation")
+        verbose_name_plural = _("Annotations")
+        indexes = (
+            models.Index(fields=("image",)),
+            models.Index(fields=("class_label",)),
+        )

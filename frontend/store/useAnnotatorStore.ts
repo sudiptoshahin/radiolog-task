@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import ApiService from "@/services/ApiService";
 import { ApiErrorResponse } from "@/models/common";
-import { IAnatomyCaseType, IAnnotationCase, IAnnotatorPayload } from "@/models/annotators";
+import { IAnatomyCaseType, IAnnotationCase, IAnnotationPayload, IAnnotatorPayload } from "@/models/annotators";
 
 
 interface AnnotatorStore {
@@ -14,6 +14,7 @@ interface AnnotatorStore {
     fetchAnnotatorCases: () => Promise<void>;
     fetchAnatomyCaseTypes: () => Promise<void>;
     getCase: (slug: string) => Promise<IAnnotationCase | undefined>;
+    saveAnnotationByImage: (payload: IAnnotationPayload) => Promise<void>;
 }
 
 
@@ -53,8 +54,21 @@ const useAnnotatorStore = create<AnnotatorStore>()((set, get) => ({
         try {
             const res = await ApiService.GET_ANATOMY_CASE(slug);
             if (res.data === undefined) return;
-            return res!.data[0] as IAnnotationCase;
+            return res!.data as IAnnotationCase;
         } catch (error) {
+            set({ error: error });
+        } finally {
+            set({ isLoading: false });
+        }
+    },
+
+    saveAnnotationByImage: async (payload: IAnnotationPayload) => {
+        set({ isLoading: true, error: null });
+        try {
+            const res = await ApiService.SAVE_ANNOTATION_BY_IMAGE(payload);
+            if (res.data === undefined) return;
+            return res.data;
+        } catch(error) {
             set({ error: error });
         } finally {
             set({ isLoading: false });
