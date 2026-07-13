@@ -100,7 +100,7 @@ export default function LoginPage() {
       }
       useUserStore.getState().setUser(res.data);
       toast.warning('You are successfully logged in.', { closeButton: false, style: { color: 'black' } });
-      router.push('/kanaban');
+      router.push('/');
       return;
 
     } finally {
@@ -117,7 +117,7 @@ export default function LoginPage() {
             <h2 className="font-['Fraunces'] text-[1.75rem] text-[#26211C] mb-1">Sign in</h2>
             <p className="font-['Inter'] text-sm text-[#8B7E6E] mb-8">
               New here?{' '}
-              <Link href="/auth/registration" className="text-[#4F6F5C] hover:underline font-medium">
+              <Link href="/auth/register" className="text-[#4F6F5C] hover:underline font-medium">
                 Create an account
               </Link>
             </p>

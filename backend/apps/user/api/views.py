@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from utils.tokens import get_token_for_user
-from apps.user.api.serializers import LoginSerializer, UserSerializer
+from apps.user.api.serializers import LoginSerializer, UserSerializer, RegisterSerializer
 
 
 class LoginView(APIView):
@@ -50,3 +50,20 @@ class LogoutView(APIView):
             )
         
         return Response(status=status.HTTP_205_RESET_CONTENT)
+    
+
+class RegisterView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "status": status.HTTP_201_CREATED,
+            },
+            status=status.HTTP_201_CREATED,
+        )
