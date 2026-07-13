@@ -50,6 +50,6 @@ Then Login and create Tags for Kanaban task
 
 
 1. __Difficultices faced for backend__
-
+Main challenge actually faced in database design for the annotator. How the relationship will work how to structure the response for the frontend and how the annotation region will save.
 
 2. __Difficulties faced in frontend__

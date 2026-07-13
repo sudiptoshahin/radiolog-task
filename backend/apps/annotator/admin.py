@@ -62,7 +62,7 @@ class AnatomyCaseTypeAdmin(admin.ModelAdmin):
 
 @admin.register(AnatomyCase)
 class AnatomyCaseAdmin(admin.ModelAdmin):
-    list_display = ("title", "case_type", "image_count", "annotated_image_count", "created_at")
+    list_display = ("title", "case_type", "image_count", "created_at")
     list_filter = ("case_type", "created_at")
     search_fields = ("title", "slug", "description")
     prepopulated_fields = {"slug": ("title",)}
@@ -83,15 +83,11 @@ class AnatomyCaseAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.select_related("case_type").prefetch_related("images", "annotated_images")
+        return qs.select_related("case_type").prefetch_related("images")
 
     @admin.display(description=_("Images"))
     def image_count(self, obj):
         return obj.images.count()
-
-    @admin.display(description=_("Annotated Images"))
-    def annotated_image_count(self, obj):
-        return obj.annotated_images.count()
 
 
 @admin.register(AnatomyImage)
