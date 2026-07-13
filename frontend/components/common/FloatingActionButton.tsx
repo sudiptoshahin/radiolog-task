@@ -34,7 +34,7 @@ export default function FloatingActionButton() {
     }, []);
 
     return (
-        <div ref={containerRef} className="fixed bottom-10 right-10 flex flex-col items-end gap-3">
+        <div ref={containerRef} className="fixed bottom-10 left-10 flex flex-col items-end gap-3">
             {/* Menu panel */}
             <div
                 className={`flex flex-col items-stretch gap-2 rounded-2xl bg-white p-2 shadow-xl transition-all duration-200 ease-out ${open

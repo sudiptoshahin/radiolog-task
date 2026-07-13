@@ -175,7 +175,7 @@ export default function Board() {
             )}
 
             <div
-                className="absolute bottom-28 right-10 flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full bg-sage animate-[bounce_2.5s_ease-in-out_infinite]"
+                className="absolute bottom-12 right-10 flex h-[50px] w-[50px] cursor-pointer items-center justify-center rounded-full bg-sage animate-[bounce_2.5s_ease-in-out_infinite]"
                 onClick={onHandleTaskCreate}
             >
                 <Image src={"/images/icons/create_task.svg"} height={24} width={24} alt="add-task" />
