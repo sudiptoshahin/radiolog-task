@@ -138,6 +138,7 @@ export default function AnnotateImage() {
 
   function handleSave() {
     setSavedFlash(true);
+    handleSvgDoubleClick();
     setTimeout(() => setSavedFlash(false), 1600);
   }
 
@@ -300,9 +301,10 @@ export default function AnnotateImage() {
     // Prefer the id the DB assigned to the annotation (needed for any
     // future edit/delete calls against the backend). Fall back to the
     // locally generated one if the store doesn't return it.
-    const savedId = (saved && typeof saved === "object" && "id" in saved
-      ? (saved as { id?: string }).id
-      : undefined) ?? ann.id;
+    // const savedId = (saved && typeof saved === "object" && "id" in saved
+    //   ? (saved as { id?: string }).id
+    //   : undefined) ?? ann.id;
+    const savedId = ann.id;
 
     const next: AnnotationMap = {
       ...annotationsByImage,
