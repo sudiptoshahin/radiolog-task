@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, PencilIcon, RedoIcon, SaveIcon, TrashIcon, U
 import ToolbarButton from "@/components/annotations/ToolbarButton";
 import Constants from "@/utils/constants";
 import { clamp, uid, pointsToPath } from "@/utils/helpers";
+import AppLayout from "@/components/layout/AppLayout";
 
 /**
  * Turn the `images[].annotations[]` payload from the API into the
@@ -403,17 +404,17 @@ export default function AnnotateImage() {
   ---------------------------- */
   if (!caseObj.id) {
     return (
-      <div className="w-full max-w-4xl mx-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between gap-4 px-4 pt-4 pb-2 border-b border-slate-100">
-          <div className="w-9 h-9 rounded-md bg-slate-100 animate-pulse" />
-          <div className="h-4 w-40 rounded bg-slate-100 animate-pulse" />
-          <div className="w-9 h-9 rounded-md bg-slate-100 animate-pulse" />
+      <div className="w-full max-w-4xl mx-auto rounded-xl border border-taupe/20 bg-white shadow-sm">
+        <div className="flex items-center justify-between gap-4 px-4 pt-4 pb-2 border-b border-sage/15">
+          <div className="w-9 h-9 rounded-md bg-cream animate-pulse" />
+          <div className="h-4 w-40 rounded bg-cream animate-pulse" />
+          <div className="w-9 h-9 rounded-md bg-cream animate-pulse" />
         </div>
         <div className="px-4 py-3">
-          <div className="h-4 w-64 rounded bg-slate-100 animate-pulse" />
+          <div className="h-4 w-64 rounded bg-cream animate-pulse" />
         </div>
-        <div className="w-full h-[440px] sm:h-[520px] bg-slate-100 flex items-center justify-center">
-          <span className="text-sm text-slate-400">
+        <div className="w-full h-[440px] sm:h-[520px] bg-neutral-900 flex items-center justify-center">
+          <span className="text-sm text-taupe-light">
             {isLoading ? "Loading case…" : "No case found"}
           </span>
         </div>
@@ -421,7 +422,7 @@ export default function AnnotateImage() {
           {Array.from({ length: 7 }).map((_, i) => (
             <div
               key={i}
-              className="w-10 h-10 rounded-md bg-slate-100 animate-pulse"
+              className="w-10 h-10 rounded-md bg-cream animate-pulse"
             />
           ))}
         </div>
@@ -433,301 +434,306 @@ export default function AnnotateImage() {
   - Render
   ------------------- */
   return (
-    <div className="w-full max-w-4xl mx-auto rounded-xl border border-slate-200 bg-white shadow-sm select-none">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 px-4 pt-4 pb-2 border-b border-slate-100">
-        <button
-          onClick={goPrev}
-          disabled={currentIndex === 0}
-          className="flex items-center justify-center w-9 h-9 rounded-md bg-blue-600 text-white disabled:opacity-40 hover:bg-blue-700 transition-colors"
-          aria-label="Previous image"
-        >
-          <ChevronLeft />
-        </button>
-
-        <h2 className="text-base font-semibold text-slate-800 tracking-wide">
-          {totalLabel}
-        </h2>
-
-        <button
-          onClick={goNext}
-          disabled={currentIndex === images.length - 1}
-          className="flex items-center justify-center w-9 h-9 rounded-md bg-blue-600 text-white disabled:opacity-40 hover:bg-blue-700 transition-colors"
-          aria-label="Next image"
-        >
-          <ChevronRight />
-        </button>
-      </div>
-
-      {/* Controls row */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 text-sm text-slate-700">
-        <label className="flex items-center gap-2">
-          <span className="text-slate-500">Select Class:</span>
-          <select
-            value={selectedClass}
-            onChange={(e) =>
-              setSelectedClass(
-                e.target.value as (typeof Constants.CLASS_OPTIONS)[number]["value"],
-              )
-            }
-            className="border border-slate-300 rounded-md px-2 py-1 bg-white"
+    <AppLayout>
+      <div className="w-full max-w-4xl mx-auto rounded-xl border border-taupe/20 bg-white shadow-sm select-none">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 px-4 pt-4 pb-2 border-b border-sage/15">
+          <button
+            onClick={goPrev}
+            disabled={currentIndex === 0}
+            className="flex items-center justify-center w-9 h-9 rounded-md bg-sage text-white disabled:opacity-40 hover:bg-sage-dark transition-colors"
+            aria-label="Previous image"
           >
-            {Constants.CLASS_OPTIONS.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          <span
-            className="w-3.5 h-3.5 rounded-full border border-black/10"
-            style={{ backgroundColor: activeClassInfo.color }}
-          />
-        </label>
+            <ChevronLeft />
+          </button>
 
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={hideAnnotations}
-            onChange={(e) => setHideAnnotations(e.target.checked)}
-          />
-          Hide Annotations
-        </label>
+          <h2 className="text-base font-semibold text-sage-dark tracking-wide">
+            {totalLabel}
+          </h2>
 
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={hideReview}
-            onChange={(e) => setHideReview(e.target.checked)}
-          />
-          Hide Review Annotations
-        </label>
-
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={ctWindow}
-            onChange={(e) => setCtWindow(e.target.checked)}
-          />
-          Apply CT Window
-        </label>
-
-        <div className="ml-auto flex items-center gap-2 text-xs text-slate-400">
-          {tool === "draw" ? (
-            <span>Click to place points · double-click or close the loop to finish</span>
-          ) : (
-            <span>Click a shape to delete it</span>
-          )}
+          <button
+            onClick={goNext}
+            disabled={currentIndex === images.length - 1}
+            className="flex items-center justify-center w-9 h-9 rounded-md bg-sage text-white disabled:opacity-40 hover:bg-sage-dark transition-colors"
+            aria-label="Next image"
+          >
+            <ChevronRight />
+          </button>
         </div>
-      </div>
 
-      {/* Image + overlay */}
-      <div
-        ref={containerRef}
-        onWheel={handleWheel}
-        className="relative w-full h-[440px] sm:h-[520px] bg-black flex items-center justify-center overflow-hidden"
-      >
-        {currentImage && (
-          <div
-            style={{
-              width: box.width,
-              height: box.height,
-              transform: `scale(${zoom})`,
-              transformOrigin: "center center",
-            }}
-            className="relative transition-transform duration-150 ease-out"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={currentImage.image}
-              alt={`${caseTitle} slice ${currentIndex + 1}`}
-              draggable={false}
-              onLoad={(e) =>
-                setNaturalSize({
-                  w: e.currentTarget.naturalWidth,
-                  h: e.currentTarget.naturalHeight,
-                })
+        {/* Controls row */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 text-sm text-taupe-dark">
+          <label className="flex items-center gap-2">
+            <span className="text-taupe-dark/70">Select Class:</span>
+            <select
+              value={selectedClass}
+              onChange={(e) =>
+                setSelectedClass(
+                  e.target.value as (typeof Constants.CLASS_OPTIONS)[number]["value"],
+                )
               }
-              style={
-                ctWindow
-                  ? { filter: "contrast(1.35) brightness(1.12)" }
-                  : undefined
-              }
-              className="w-full h-full object-contain pointer-events-none"
-            />
-
-            <svg
-              ref={svgRef}
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              className="absolute inset-0 w-full h-full"
-              style={{ cursor: tool === "draw" ? "crosshair" : "pointer" }}
-              onClick={handleSvgClick}
-              onDoubleClick={handleSvgDoubleClick}
+              className="border border-taupe/30 rounded-md px-2 py-1 bg-white"
             >
-              {!hideAnnotations &&
-                currentAnnotations.map((ann) => (
-                  <g key={ann.id}>
+              {Constants.CLASS_OPTIONS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <span
+              className="w-3.5 h-3.5 rounded-full border border-black/10"
+              style={{ backgroundColor: activeClassInfo.color }}
+            />
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={hideAnnotations}
+              onChange={(e) => setHideAnnotations(e.target.checked)}
+              className="accent-sage"
+            />
+            Hide Annotations
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={hideReview}
+              onChange={(e) => setHideReview(e.target.checked)}
+              className="accent-sage"
+            />
+            Hide Review Annotations
+          </label>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={ctWindow}
+              onChange={(e) => setCtWindow(e.target.checked)}
+              className="accent-sage"
+            />
+            Apply CT Window
+          </label>
+
+          <div className="ml-auto flex items-center gap-2 text-xs text-taupe-dark/50">
+            {tool === "draw" ? (
+              <span>Click to place points · double-click or close the loop to finish</span>
+            ) : (
+              <span>Click a shape to delete it</span>
+            )}
+          </div>
+        </div>
+
+        {/* Image + overlay */}
+        <div
+          ref={containerRef}
+          onWheel={handleWheel}
+          className="relative w-full h-[440px] sm:h-[520px] bg-neutral-900 flex items-center justify-center overflow-hidden"
+        >
+          {currentImage && (
+            <div
+              style={{
+                width: box.width,
+                height: box.height,
+                transform: `scale(${zoom})`,
+                transformOrigin: "center center",
+              }}
+              className="relative transition-transform duration-150 ease-out"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={currentImage.image}
+                alt={`${caseTitle} slice ${currentIndex + 1}`}
+                draggable={false}
+                onLoad={(e) =>
+                  setNaturalSize({
+                    w: e.currentTarget.naturalWidth,
+                    h: e.currentTarget.naturalHeight,
+                  })
+                }
+                style={
+                  ctWindow
+                    ? { filter: "contrast(1.35) brightness(1.12)" }
+                    : undefined
+                }
+                className="w-full h-full object-contain pointer-events-none"
+              />
+
+              <svg
+                ref={svgRef}
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                className="absolute inset-0 w-full h-full"
+                style={{ cursor: tool === "draw" ? "crosshair" : "pointer" }}
+                onClick={handleSvgClick}
+                onDoubleClick={handleSvgDoubleClick}
+              >
+                {!hideAnnotations &&
+                  currentAnnotations.map((ann) => (
+                    <g key={ann.id}>
+                      <path
+                        d={pointsToPath(ann.points, ann.closed)}
+                        fill={ann.color}
+                        fillOpacity={0.35}
+                        stroke={ann.color}
+                        strokeWidth={0.4}
+                        vectorEffect="non-scaling-stroke"
+                        onClick={(e) => {
+                          if (tool === "delete") {
+                            e.stopPropagation();
+                            // deleteAnnotation(ann.id);
+                          }
+                        }}
+                        style={{
+                          cursor: tool === "delete" ? "not-allowed" : "default",
+                        }}
+                      />
+                      {ann.points.map((p, i) => (
+                        <circle
+                          key={i}
+                          cx={p.x}
+                          cy={p.y}
+                          r={0.9}
+                          fill="white"
+                          stroke={ann.color}
+                          strokeWidth={0.4}
+                          vectorEffect="non-scaling-stroke"
+                          onMouseDown={(e) => {
+                            if (tool !== "draw") return;
+                            e.stopPropagation();
+                            startDragPoint(ann.id, i, false);
+                          }}
+                          style={{
+                            cursor: tool === "draw" ? "grab" : "default",
+                          }}
+                        />
+                      ))}
+                    </g>
+                  ))}
+
+                {!hideAnnotations && drawingAnnotation && (
+                  <g>
                     <path
-                      d={pointsToPath(ann.points, ann.closed)}
-                      fill={ann.color}
-                      fillOpacity={0.35}
-                      stroke={ann.color}
+                      d={pointsToPath(drawingAnnotation.points, false)}
+                      fill={drawingAnnotation.color}
+                      fillOpacity={0.2}
+                      stroke={drawingAnnotation.color}
+                      strokeDasharray="1.2 1"
                       strokeWidth={0.4}
                       vectorEffect="non-scaling-stroke"
-                      onClick={(e) => {
-                        if (tool === "delete") {
-                          e.stopPropagation();
-                          // deleteAnnotation(ann.id);
-                        }
-                      }}
-                      style={{
-                        cursor: tool === "delete" ? "not-allowed" : "default",
-                      }}
                     />
-                    {ann.points.map((p, i) => (
+                    {drawingAnnotation.points.map((p, i) => (
                       <circle
                         key={i}
                         cx={p.x}
                         cy={p.y}
-                        r={0.9}
-                        fill="white"
-                        stroke={ann.color}
+                        r={i === 0 ? 1.2 : 0.9}
+                        fill={i === 0 ? drawingAnnotation.color : "white"}
+                        stroke={drawingAnnotation.color}
                         strokeWidth={0.4}
                         vectorEffect="non-scaling-stroke"
                         onMouseDown={(e) => {
-                          if (tool !== "draw") return;
                           e.stopPropagation();
-                          startDragPoint(ann.id, i, false);
+                          startDragPoint(drawingAnnotation.id, i, true);
                         }}
-                        style={{
-                          cursor: tool === "draw" ? "grab" : "default",
-                        }}
+                        style={{ cursor: "grab" }}
                       />
                     ))}
                   </g>
-                ))}
-
-              {!hideAnnotations && drawingAnnotation && (
-                <g>
-                  <path
-                    d={pointsToPath(drawingAnnotation.points, false)}
-                    fill={drawingAnnotation.color}
-                    fillOpacity={0.2}
-                    stroke={drawingAnnotation.color}
-                    strokeDasharray="1.2 1"
-                    strokeWidth={0.4}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                  {drawingAnnotation.points.map((p, i) => (
-                    <circle
-                      key={i}
-                      cx={p.x}
-                      cy={p.y}
-                      r={i === 0 ? 1.2 : 0.9}
-                      fill={i === 0 ? drawingAnnotation.color : "white"}
-                      stroke={drawingAnnotation.color}
-                      strokeWidth={0.4}
-                      vectorEffect="non-scaling-stroke"
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        startDragPoint(drawingAnnotation.id, i, true);
-                      }}
-                      style={{ cursor: "grab" }}
-                    />
-                  ))}
-                </g>
-              )}
-            </svg>
-          </div>
-        )}
-
-        {/* Review annotation reference thumbnail */}
-        {!hideReview && reviewImage && (
-          <div className="absolute bottom-3 right-3 w-24 rounded-md overflow-hidden border-2 border-white shadow-lg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={reviewImage.image}
-              alt="Reviewed reference annotation"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] text-center py-0.5">
-              Reference
+                )}
+              </svg>
             </div>
-          </div>
-        )}
+          )}
 
-        {savedFlash && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-lg">
-            Annotations saved
-          </div>
-        )}
+          {/* Review annotation reference thumbnail */}
+          {!hideReview && reviewImage && (
+            <div className="absolute bottom-3 right-3 w-24 rounded-md overflow-hidden border-2 border-cream shadow-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={reviewImage.image}
+                alt="Reviewed reference annotation"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] text-center py-0.5">
+                Reference
+              </div>
+            </div>
+          )}
+
+          {savedFlash && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-lg">
+              Annotations saved
+            </div>
+          )}
+        </div>
+
+        {/* Slice scrubber */}
+        <div className="px-6 pt-3">
+          <input
+            type="range"
+            min={0}
+            max={images.length - 1}
+            value={currentIndex}
+            onChange={(e) => {
+              setDrawingAnnotation(null);
+              setCurrentIndex(Number(e.target.value));
+            }}
+            className="w-full accent-sage"
+          />
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex items-center justify-center gap-2 px-4 py-4">
+          <ToolbarButton
+            active={tool === "draw"}
+            label="Draw annotation"
+            onClick={() => setTool("draw")}
+          >
+            <PencilIcon />
+          </ToolbarButton>
+
+          <ToolbarButton label="Zoom out" onClick={zoomOut}>
+            <ZoomOutIcon />
+          </ToolbarButton>
+
+          <ToolbarButton label="Reset zoom" onClick={zoomReset}>
+            <ZoomResetIcon />
+          </ToolbarButton>
+
+          <ToolbarButton label="Zoom in" onClick={zoomIn}>
+            <ZoomInIcon />
+          </ToolbarButton>
+
+          <ToolbarButton
+            active={tool === "delete"}
+            label="Delete annotation"
+            onClick={() => setTool("delete")}
+          >
+            <TrashIcon />
+          </ToolbarButton>
+
+          <ToolbarButton
+            label="Undo"
+            onClick={handleUndo}
+            disabled={historyIndex === 0}
+          >
+            <UndoIcon />
+          </ToolbarButton>
+
+          <ToolbarButton
+            label="Redo"
+            onClick={handleRedo}
+            disabled={historyIndex === history.length - 1}
+          >
+            <RedoIcon />
+          </ToolbarButton>
+
+          <ToolbarButton label="Save annotations" onClick={handleSave} accent>
+            <SaveIcon />
+          </ToolbarButton>
+        </div>
       </div>
-
-      {/* Slice scrubber */}
-      <div className="px-6 pt-3">
-        <input
-          type="range"
-          min={0}
-          max={images.length - 1}
-          value={currentIndex}
-          onChange={(e) => {
-            setDrawingAnnotation(null);
-            setCurrentIndex(Number(e.target.value));
-          }}
-          className="w-full accent-blue-600"
-        />
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex items-center justify-center gap-2 px-4 py-4">
-        <ToolbarButton
-          active={tool === "draw"}
-          label="Draw annotation"
-          onClick={() => setTool("draw")}
-        >
-          <PencilIcon />
-        </ToolbarButton>
-
-        <ToolbarButton label="Zoom out" onClick={zoomOut}>
-          <ZoomOutIcon />
-        </ToolbarButton>
-
-        <ToolbarButton label="Reset zoom" onClick={zoomReset}>
-          <ZoomResetIcon />
-        </ToolbarButton>
-
-        <ToolbarButton label="Zoom in" onClick={zoomIn}>
-          <ZoomInIcon />
-        </ToolbarButton>
-
-        <ToolbarButton
-          active={tool === "delete"}
-          label="Delete annotation"
-          onClick={() => setTool("delete")}
-        >
-          <TrashIcon />
-        </ToolbarButton>
-
-        <ToolbarButton
-          label="Undo"
-          onClick={handleUndo}
-          disabled={historyIndex === 0}
-        >
-          <UndoIcon />
-        </ToolbarButton>
-
-        <ToolbarButton
-          label="Redo"
-          onClick={handleRedo}
-          disabled={historyIndex === history.length - 1}
-        >
-          <RedoIcon />
-        </ToolbarButton>
-
-        <ToolbarButton label="Save annotations" onClick={handleSave} accent>
-          <SaveIcon />
-        </ToolbarButton>
-      </div>
-    </div>
+    </AppLayout>
   );
 }

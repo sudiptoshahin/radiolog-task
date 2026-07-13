@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@theme {
+  --color-sage: #8A9A5B;
+  --color-sage-light: #A3B378;
+  --color-sage-dark: #6F7D48;
+
+  --color-taupe: #B38B6D;
+  --color-taupe-light: #C7A488;
+  --color-taupe-dark: #8F6D53;
+
+  --color-cream: #FFFDD0;
+  --color-cream-dark: #F5F0B8;
+}
