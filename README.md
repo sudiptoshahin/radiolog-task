@@ -38,6 +38,8 @@ Then Login and create Tags for Kanaban task
 4. __Frontend setup__
     *  `cd frontend`
     * `npm install`
+    * __Copy Local env from .env.example to .env file__
+        * `cp .env.example .env`
     * `npm run dev`
 
 
