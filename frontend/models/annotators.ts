@@ -90,7 +90,7 @@ export interface IAnnotationCase {
 // }
 
 
-interface Point {
+export interface Point {
     x: number;
     y: number;
 }
@@ -101,4 +101,3 @@ export interface IAnnotationPayload {
     image: string;
     points: Array<Point>;
 }
-

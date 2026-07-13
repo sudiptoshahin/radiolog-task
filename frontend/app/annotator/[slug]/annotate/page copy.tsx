@@ -8,41 +8,179 @@ import {
 } from "react";
 import { useParams } from "next/navigation";
 import useAnnotatorStore from "@/store/useAnnotatorStore";
-import { IAnnotationCase, IAnnotationPayload, Point } from "@/models/annotators";
-import { AnatomyImage, AnnotationMap, Tool, Annotation } from "@/models/annotations";
-import { ChevronLeft, ChevronRight, PencilIcon, RedoIcon, SaveIcon, TrashIcon, UndoIcon, ZoomInIcon, ZoomOutIcon, ZoomResetIcon } from "@/components/common/IconComponent";
-import ToolbarButton from "@/components/annotations/ToolbarButton";
-import Constants from "@/utils/constants";
-import { clamp, uid, pointsToPath } from "@/utils/helpers";
+import { IAnnotationPayload } from "@/models/annotators";
 
-/**
- * Turn the `images[].annotations[]` payload from the API into the
- * AnnotationMap shape the editor works with internally.
- *
- * Backend annotations are always fully-formed shapes by the time they
- * come back from the API, so we render them as closed paths regardless
- * of whatever `closed` value happens to be stored — this keeps the
- * stroke outline visually sealed even if that flag was persisted as
- * `false` upstream.
- */
-function buildAnnotationMapFromCase(images: AnatomyImage[]): AnnotationMap {
-  const map: AnnotationMap = {};
-  for (const img of images) {
-    if (!img.annotations || img.annotations.length === 0) continue;
-    map[img.id] = img.annotations.map((raw) => {
-      const classInfo = Constants.CLASS_OPTIONS.find((c) => c.value === raw.class_label);
-      return {
-        id: raw.id,
-        classLabel: raw.class_label,
-        color: raw.annotated_color || classInfo?.color || "#dc2626",
-        points: raw.points.map((p) => ({ x: p.x, y: p.y })),
-        closed: true,
-      };
-    });
-  }
-  return map;
+/* ============================================================================
+ * TYPES — matches the shape of the object you get back from the API
+ * ==========================================================================*/
+
+interface AnatomyImage {
+  id: string;
+  case: string;
+  image: string;
 }
 
+interface CaseType {
+  id: string;
+  title: string;
+  slug: string;
+}
+
+export interface IAnnotationCase {
+  id: string;
+  title: string;
+  slug: string;
+  case_type: CaseType;
+  description: string;
+  images: AnatomyImage[];
+  annotated_images: AnatomyImage[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface Point {
+  x: number; // percentage 0-100, relative to the rendered image box
+  y: number; // percentage 0-100
+}
+
+interface Annotation {
+  id: string;
+  classLabel: string;
+  color: string;
+  points: Point[];
+  closed: boolean;
+}
+
+/** annotations keyed by image id */
+type AnnotationMap = Record<string, Annotation[]>;
+
+type Tool = "draw" | "delete";
+
+/* ============================================================================
+ * CONSTANTS
+ * ==========================================================================*/
+
+const CLASS_OPTIONS = [
+  { value: "TUMOR", label: "Tumor", color: "#dc2626" },
+  { value: "EDEMA", label: "Edema", color: "#2563eb" },
+  { value: "NECROSIS", label: "Necrosis", color: "#7c3aed" },
+  { value: "other", label: "Other", color: "#059669" },
+] as const;
+
+const ZOOM_MIN = 1;
+const ZOOM_MAX = 4;
+const ZOOM_STEP = 0.25;
+const CLOSE_THRESHOLD = 3;
+const WHEEL_NAV_COOLDOWN_MS = 350;
+
+/* ============================================================================
+ * ICONS — plain inline SVG, zero extra dependencies
+ * ==========================================================================*/
+
+function IconWrap({ children }: { children: React.ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  );
+}
+const ChevronLeft = () => (
+  <IconWrap>
+    <path d="M15 18l-6-6 6-6" />
+  </IconWrap>
+);
+const ChevronRight = () => (
+  <IconWrap>
+    <path d="M9 18l6-6-6-6" />
+  </IconWrap>
+);
+const PencilIcon = () => (
+  <IconWrap>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+  </IconWrap>
+);
+const ZoomOutIcon = () => (
+  <IconWrap>
+    <circle cx="11" cy="11" r="8" />
+    <path d="M21 21l-4.35-4.35" />
+    <path d="M8 11h6" />
+  </IconWrap>
+);
+const ZoomInIcon = () => (
+  <IconWrap>
+    <circle cx="11" cy="11" r="8" />
+    <path d="M21 21l-4.35-4.35" />
+    <path d="M11 8v6M8 11h6" />
+  </IconWrap>
+);
+const ZoomResetIcon = () => (
+  <IconWrap>
+    <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+    <path d="M16 3h3a2 2 0 0 1 2 2v3" />
+    <path d="M8 21H5a2 2 0 0 1-2-2v-3" />
+    <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+  </IconWrap>
+);
+const TrashIcon = () => (
+  <IconWrap>
+    <path d="M3 6h18" />
+    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+  </IconWrap>
+);
+const UndoIcon = () => (
+  <IconWrap>
+    <path d="M3 7v6h6" />
+    <path d="M3 13a9 9 0 1 0 3-7.7L3 7" />
+  </IconWrap>
+);
+const RedoIcon = () => (
+  <IconWrap>
+    <path d="M21 7v6h-6" />
+    <path d="M21 13a9 9 0 1 1-3-7.7L21 7" />
+  </IconWrap>
+);
+const SaveIcon = () => (
+  <IconWrap>
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+    <path d="M17 21v-8H7v8" />
+    <path d="M7 3v5h8" />
+  </IconWrap>
+);
+
+/* ============================================================================
+ * HELPERS
+ * ==========================================================================*/
+
+const clamp = (v: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, v));
+
+const uid = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+function pointsToPath(points: Point[], closed: boolean) {
+  if (points.length === 0) return "";
+  const d = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x} ${p.y}`)
+    .join(" ");
+  return closed ? `${d} Z` : d;
+}
+
+/* ============================================================================
+ * COMPONENT
+ * ==========================================================================*/
 
 export default function AnnotateImage() {
   const { slug } = useParams<{ slug: string }>();
@@ -51,6 +189,7 @@ export default function AnnotateImage() {
   const [caseObj, setCaseObj] = useState<IAnnotationCase>(
     {} as IAnnotationCase,
   );
+
 
   useEffect(() => {
     if (!slug) return;
@@ -74,8 +213,8 @@ export default function AnnotateImage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentImage = images[currentIndex];
 
-  const [selectedClass, setSelectedClass] = useState<(typeof Constants.CLASS_OPTIONS)[number]["value"]>(Constants.CLASS_OPTIONS[0].value);
-  const activeClassInfo = Constants.CLASS_OPTIONS.find((c) => c.value === selectedClass) ?? Constants.CLASS_OPTIONS[0];
+  const [selectedClass, setSelectedClass] = useState<(typeof CLASS_OPTIONS)[number]["value"]>(CLASS_OPTIONS[0].value);
+  const activeClassInfo = CLASS_OPTIONS.find((c) => c.value === selectedClass) ?? CLASS_OPTIONS[0];
 
   const [hideAnnotations, setHideAnnotations] = useState(false);
   const [hideReview, setHideReview] = useState(false);
@@ -108,24 +247,29 @@ export default function AnnotateImage() {
   const currentAnnotations =
     (currentImage && annotationsByImage[currentImage.id]) || [];
 
-  /**
-   * Hydrate the editor whenever a new case loads. Annotations now live
-   * on the case payload itself (images[].annotations, coming from the
-   * DB) instead of localStorage, so we build the initial AnnotationMap
-   * straight from caseObj.
-   */
+
   useEffect(() => {
     if (!caseObj.id) return;
 
+    // Jump back to the first slice and clear any in-progress
+    // drawing/zoom state left over from the previous case.
     setCurrentIndex(0);
     setZoom(1);
     setTool("draw");
     setDrawingAnnotation(null);
 
-    const initial = buildAnnotationMapFromCase(caseObj.images ?? []);
-    setAnnotationsByImage(initial);
-    setHistory([initial]);
-    setHistoryIndex(0);
+    try {
+      const raw = localStorage.getItem(`annotations_${caseObj.id}`);
+      const parsed: AnnotationMap = raw ? JSON.parse(raw) : {};
+      setAnnotationsByImage(parsed);
+      setHistory([parsed]);
+      setHistoryIndex(0);
+    } catch {
+      setAnnotationsByImage({});
+      setHistory([{}]);
+      setHistoryIndex(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseObj.id]);
 
   function commitAnnotations(next: AnnotationMap) {
@@ -137,8 +281,15 @@ export default function AnnotateImage() {
   }
 
   function handleSave() {
+    if (!caseObj.id) return;
+    localStorage.setItem(
+      `annotations_${caseObj.id}`,
+      JSON.stringify(annotationsByImage),
+    );
     setSavedFlash(true);
     setTimeout(() => setSavedFlash(false), 1600);
+
+    console.log('___annotationsByImage___', annotationsByImage);
   }
 
   function handleUndo() {
@@ -156,9 +307,8 @@ export default function AnnotateImage() {
     setAnnotationsByImage(history[idx]);
   }
 
-  /* ---------------- 
-  - Navigation
-  ---------------- */
+  /* ---------------- Navigation ---------------- */
+
   const goPrev = useCallback(() => {
     setDrawingAnnotation(null);
     setCurrentIndex((i) => clamp(i - 1, 0, images.length - 1));
@@ -192,26 +342,24 @@ export default function AnnotateImage() {
     if (e.ctrlKey || e.metaKey) {
       // pinch / ctrl+wheel => zoom
       setZoom((z) =>
-        clamp(z + (e.deltaY < 0 ? Constants.ZOOM_STEP : -Constants.ZOOM_STEP), Constants.ZOOM_MIN, Constants.ZOOM_MAX),
+        clamp(z + (e.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP), ZOOM_MIN, ZOOM_MAX),
       );
       return;
     }
     const now = Date.now();
-    if (now - wheelCooldownRef.current < Constants.WHEEL_NAV_COOLDOWN_MS) return;
+    if (now - wheelCooldownRef.current < WHEEL_NAV_COOLDOWN_MS) return;
     wheelCooldownRef.current = now;
     e.deltaY > 0 ? goNext() : goPrev();
   }
 
-  /* ---------------- 
-  - Zoom controls 
-  ---------------- */
-  const zoomIn = () => setZoom((z) => clamp(z + Constants.ZOOM_STEP, Constants.ZOOM_MIN, Constants.ZOOM_MAX));
-  const zoomOut = () => setZoom((z) => clamp(z - Constants.ZOOM_STEP, Constants.ZOOM_MIN, Constants.ZOOM_MAX));
+  /* ---------------- Zoom controls ---------------- */
+
+  const zoomIn = () => setZoom((z) => clamp(z + ZOOM_STEP, ZOOM_MIN, ZOOM_MAX));
+  const zoomOut = () => setZoom((z) => clamp(z - ZOOM_STEP, ZOOM_MIN, ZOOM_MAX));
   const zoomReset = () => setZoom(1);
 
-  /* ----------------------------------------------------
-   - Image box measurement (for correct overlay mapping)
-   ------------------------------------------------------ */
+  /* ---------------- Image box measurement (for correct overlay mapping) --- */
+
   useEffect(() => {
     function recalc() {
       const el = containerRef.current;
@@ -236,9 +384,7 @@ export default function AnnotateImage() {
     return () => window.removeEventListener("resize", recalc);
   }, [naturalSize]);
 
-  /*-------------------------------- 
-   - Drawing / editing annotations
-  ----------------------------------- */
+  /* ---------------- Drawing / editing annotations ---------------- */
   function getRelativePoint(e: { clientX: number; clientY: number }): Point {
     const svg = svgRef.current;
     if (!svg) return { x: 0, y: 0 };
@@ -259,7 +405,7 @@ export default function AnnotateImage() {
       // calculate euclidean distance of 2 points
       const first = drawingAnnotation.points[0];
       const dist = Math.hypot(pt.x - first.x, pt.y - first.y);
-      if (drawingAnnotation.points.length >= 3 && dist < Constants.CLOSE_THRESHOLD) {
+      if (drawingAnnotation.points.length >= 3 && dist < CLOSE_THRESHOLD) {
         finishAnnotation(drawingAnnotation);
         return;
       }
@@ -284,49 +430,40 @@ export default function AnnotateImage() {
     }
   }
 
+
   async function finishAnnotation(ann: Annotation) {
-    if (!currentImage) return;
-
     const payload = {
-      class_label: ann.classLabel,
-      annotated_color: ann.color,
+      class_label: drawingAnnotation?.classLabel,
+      annotated_color: drawingAnnotation?.color,
       image: currentImage.id,
-      points: ann.points,
-      closed: true,
-    } as IAnnotationPayload;
+      points: drawingAnnotation?.points,
+      closed: drawingAnnotation?.closed
+    } as IAnnotationPayload
 
-    const saved = await saveAnnotationByImage(payload);
+    await saveAnnotationByImage(payload);
 
-    // Prefer the id the DB assigned to the annotation (needed for any
-    // future edit/delete calls against the backend). Fall back to the
-    // locally generated one if the store doesn't return it.
-    const savedId = (saved && typeof saved === "object" && "id" in saved
-      ? (saved as { id?: string }).id
-      : undefined) ?? ann.id;
-
+    if (!currentImage) return;
     const next: AnnotationMap = {
       ...annotationsByImage,
       [currentImage.id]: [
         ...(annotationsByImage[currentImage.id] || []),
-        { ...ann, id: savedId, closed: true },
+        { ...ann, closed: true },
       ],
     };
     commitAnnotations(next);
     setDrawingAnnotation(null);
   }
 
-  // function deleteAnnotation(id: string) {
-  //   if (!currentImage) return;
-  //   // TODO: call a delete endpoint once one exists so removals persist
-  //   // server-side too — for now this only updates local editor state.
-  //   const next: AnnotationMap = {
-  //     ...annotationsByImage,
-  //     [currentImage.id]: (annotationsByImage[currentImage.id] || []).filter(
-  //       (a) => a.id !== id,
-  //     ),
-  //   };
-  //   commitAnnotations(next);
-  // }
+  function deleteAnnotation(id: string) {
+    if (!currentImage) return;
+    const next: AnnotationMap = {
+      ...annotationsByImage,
+      [currentImage.id]: (annotationsByImage[currentImage.id] || []).filter(
+        (a) => a.id !== id,
+      ),
+    };
+    commitAnnotations(next);
+  }
 
   function startDragPoint(
     annotationId: string,
@@ -383,9 +520,8 @@ export default function AnnotateImage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawingAnnotation, currentImage, annotationsByImage]);
 
-  /* -----------------------
-  - Derived
-  ------------------------ */
+  /* ---------------- Derived ---------------- */
+
   const reviewImage = caseObj.annotated_images?.[0];
 
   const caseTitle = caseObj.title
@@ -396,9 +532,8 @@ export default function AnnotateImage() {
     ? `${caseTitle} (${currentIndex + 1}/${images.length})`
     : caseTitle;
 
-  /*--------------------------
-   - Loading / empty states
-  ---------------------------- */
+  /* ---------------- Loading / empty states ---------------- */
+
   if (!caseObj.id) {
     return (
       <div className="w-full max-w-4xl mx-auto rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -427,9 +562,8 @@ export default function AnnotateImage() {
     );
   }
 
-  /* --------------------
-  - Render
-  ------------------- */
+  /* ---------------- Render ---------------- */
+
   return (
     <div className="w-full max-w-4xl mx-auto rounded-xl border border-slate-200 bg-white shadow-sm select-none">
       {/* Header */}
@@ -465,12 +599,12 @@ export default function AnnotateImage() {
             value={selectedClass}
             onChange={(e) =>
               setSelectedClass(
-                e.target.value as (typeof Constants.CLASS_OPTIONS)[number]["value"],
+                e.target.value as (typeof CLASS_OPTIONS)[number]["value"],
               )
             }
             className="border border-slate-300 rounded-md px-2 py-1 bg-white"
           >
-            {Constants.CLASS_OPTIONS.map((c) => (
+            {CLASS_OPTIONS.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
               </option>
@@ -575,7 +709,7 @@ export default function AnnotateImage() {
                       onClick={(e) => {
                         if (tool === "delete") {
                           e.stopPropagation();
-                          // deleteAnnotation(ann.id);
+                          deleteAnnotation(ann.id);
                         }
                       }}
                       style={{
@@ -727,5 +861,46 @@ export default function AnnotateImage() {
         </ToolbarButton>
       </div>
     </div>
+  );
+}
+
+/* ============================================================================
+ * Small presentational helper
+ * ==========================================================================*/
+
+function ToolbarButton({
+  children,
+  onClick,
+  label,
+  active,
+  disabled,
+  accent,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={[
+        "flex items-center justify-center w-10 h-10 rounded-md transition-colors",
+        "disabled:opacity-30 disabled:cursor-not-allowed",
+        accent
+          ? "bg-emerald-600 text-white hover:bg-emerald-700"
+          : active
+            ? "bg-blue-700 text-white"
+            : "bg-blue-600 text-white hover:bg-blue-700",
+      ].join(" ")}
+    >
+      {children}
+    </button>
   );
 }
