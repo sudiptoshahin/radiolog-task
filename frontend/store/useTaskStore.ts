@@ -95,19 +95,29 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
     },
 
     updateTask: async (taskId: string, payload: TaskUpdatePayload) => {
-        set({ isLoading: true, error: null });
+        const previousTasks = get().tasks;
+
+        set({
+            tasks: previousTasks.map((t) =>
+                t.id === taskId ? { ...t, ...payload, tags: t.tags } as Task : t
+            ),
+            error: null,
+        });
+
         const res = await ApiService.UPDATE_TASK(taskId, payload);
 
         if (isTask(res)) {
             set((state) => ({
                 tasks: state.tasks.map((t) => (t.id === taskId ? res : t)),
-                isLoading: false,
             }));
             return res;
         }
 
         const err = res as ApiErrorResponse;
-        set({ error: err.message ?? "Failed to update task.", isLoading: false });
+        set({
+            tasks: previousTasks,
+            error: err.message ?? "Failed to update task.",
+        });
         return null;
     },
 
@@ -115,8 +125,6 @@ const useTaskStore = create<TaskStore>()((set, get) => ({
         set({ isLoading: true, error: null });
         const res = await ApiService.DELETE_TASK(taskId);
 
-        // DELETE endpoints often return 204 No Content -> res.data is "" or undefined,
-        // which is not an ApiErrorResponse shape, so treat "no error object" as success.
         const err = res as ApiErrorResponse;
         if (err && err.message) {
             set({ error: err.message, isLoading: false });
